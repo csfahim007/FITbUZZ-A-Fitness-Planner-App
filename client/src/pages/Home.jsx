@@ -3,6 +3,7 @@
 import { FaDumbbell, FaAppleAlt, FaListAlt, FaQuestionCircle, FaTimes, FaComments } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom'; // Add this import
 
 export default function Home() {
   // Mock token for demo - set to true to simulate logged-in state
@@ -57,7 +58,7 @@ export default function Home() {
       <motion.div
         variants={bgVariants}
         animate="animate"
-        className="relative h-[572px] bg-cover bg-center bg-fixed flex items-center justify-center w-full"
+        className="relative h-[570px] bg-cover bg-center bg-fixed flex items-center justify-center w-full"
         style={{ backgroundColor: '#1F2937' }}
       >
         {/* Gradient Overlay */}
@@ -122,30 +123,30 @@ export default function Home() {
           >
             {token ? (
               <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                <a
-                  href="/dashboard"
+                <Link
+                  to="/dashboard"
                   className="bg-cyan-800 hover:bg-cyan-500 text-white font-bold py-4 px-8 rounded-full text-lg transition duration-300 shadow-lg"
                 >
                   Go to Dashboard
-                </a>
+                </Link>
               </motion.div>
             ) : (
               <>
                 <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                  <a
-                    href="/register"
+                  <Link
+                    to="/register"
                     className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-8 rounded-full text-lg transition duration-300 shadow-lg"
                   >
                     Get Started Now
-                  </a>
+                  </Link>
                 </motion.div>
                 <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                  <a
-                    href="/login"
+                  <Link
+                    to="/login"
                     className="bg-cyan-800 hover:bg-cyan-500 text-white font-bold py-4 px-8 rounded-full text-lg transition duration-300 shadow-lg"
                   >
                     Log In
-                  </a>
+                  </Link>
                 </motion.div>
               </>
             )}
@@ -259,30 +260,30 @@ export default function Home() {
             <div className="space-y-4">
               {token ? (
                 <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                  <a
-                    href="/dashboard"
+                  <Link
+                    to="/dashboard"
                     className="block w-full bg-cyan-600 text-white py-3 px-4 rounded-full hover:bg-cyan-500 transition duration-300 shadow-md hover:shadow-lg font-semibold"
                   >
                     Go to Dashboard
-                  </a>
+                  </Link>
                 </motion.div>
               ) : (
                 <>
                   <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                    <a
-                      href="/login"
+                    <Link
+                      to="/login"
                       className="block w-full bg-cyan-600 text-white py-3 px-4 rounded-full hover:bg-cyan-500 transition duration-300 shadow-md hover:shadow-lg font-semibold"
                     >
                       Login
-                    </a>
+                    </Link>
                   </motion.div>
                   <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                    <a
-                      href="/register"
+                    <Link
+                      to="/register"
                       className="block w-full bg-teal-600 text-white py-3 px-4 rounded-full hover:bg-teal-700 transition duration-300 shadow-md hover:shadow-lg font-semibold"
                     >
                       Register
-                    </a>
+                    </Link>
                   </motion.div>
                 </>
               )}
