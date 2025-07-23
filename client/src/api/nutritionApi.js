@@ -1,14 +1,19 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const nutritionApi = createApi({
   reducerPath: 'nutritionApi',
   baseQuery: fetchBaseQuery({ 
-    baseUrl: '/api/nutrition',
+    baseUrl: import.meta.env.VITE_API_BASE_URL ? 
+      import.meta.env.VITE_API_BASE_URL + '/api/nutrition' : 
+      '/api/nutrition', // Use proxy when VITE_API_BASE_URL is empty
+    credentials: 'include',
     prepareHeaders: (headers, { getState }) => {
-      const token = getState().auth.token;
+      const token = getState().auth?.token || localStorage.getItem('token');
       if (token) {
-        headers.set('authorization', `Bearer ${token}`);
+        headers.set('Authorization', `Bearer ${token}`); // Fixed: was lowercase 'authorization'
       }
+      headers.set('Content-Type', 'application/json');
+      headers.set('Accept', 'application/json');
       return headers;
     }
   }),
@@ -17,7 +22,17 @@ export const nutritionApi = createApi({
     getNutritionLogs: builder.query({
       query: (date) => `?date=${date}`,
       providesTags: ['Nutrition'],
-      transformResponse: (response) => response || []
+      transformResponse: (response) => {
+        console.log('Nutrition API Response:', response);
+        return response?.data || response || [];
+      },
+      transformErrorResponse: (response) => {
+        console.error('Nutrition API Error:', response);
+        return {
+          status: response.status,
+          message: response.data?.message || 'Failed to fetch nutrition logs'
+        };
+      }
     }),
     logNutrition: builder.mutation({
       query: (entry) => ({
@@ -26,6 +41,7 @@ export const nutritionApi = createApi({
         body: entry,
       }),
       invalidatesTags: ['Nutrition'],
+      transformResponse: (response) => response?.data || response
     }),
     updateNutritionLog: builder.mutation({
       query: ({ id, ...entry }) => ({
@@ -34,6 +50,7 @@ export const nutritionApi = createApi({
         body: entry,
       }),
       invalidatesTags: ['Nutrition'],
+      transformResponse: (response) => response?.data || response
     }),
     deleteNutritionLog: builder.mutation({
       query: (id) => ({
@@ -41,6 +58,7 @@ export const nutritionApi = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: ['Nutrition'],
+      transformResponse: (response) => response?.data || response
     }),
   }),
 });

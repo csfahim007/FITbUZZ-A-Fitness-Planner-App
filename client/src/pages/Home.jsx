@@ -57,7 +57,7 @@ export default function Home() {
       <motion.div
         variants={bgVariants}
         animate="animate"
-        className="relative h-[566px] bg-cover bg-center bg-fixed flex items-center justify-center w-full"
+        className="relative h-[572px] bg-cover bg-center bg-fixed flex items-center justify-center w-full"
         style={{ backgroundColor: '#1F2937' }}
       >
         {/* Gradient Overlay */}
@@ -110,7 +110,7 @@ export default function Home() {
             variants={textVariants}
             initial="hidden"
             animate="visible"
-            className="text-xl md:text-3xl mb-10 font-medium text-gray-100 max-w-3xl mx-auto"
+            className="text-xl md:text-3xl mb-10 font-medium text-gray-50 max-w-3xl mx-auto"
           >
             Plan, track, and conquer your goals with cutting-edge tools and personalized insights.
           </motion.p>

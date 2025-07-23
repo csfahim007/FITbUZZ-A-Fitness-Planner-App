@@ -1,26 +1,40 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   server: {
-    proxy: {
+    port: 5173,
+    host: true,
+    strictPort: true,
+    proxy: mode === 'development' ? {
       '/api': {
-        target: 'http://localhost:5000', // Your backend server
+        target: 'https://fitbuzz-backend.onrender.com',
         changeOrigin: true,
-        secure: false,
-        configure: (proxy, options) => {
-          proxy.on('error', (err, req, res) => {
-            console.log('Proxy error:', err);
+        secure: true,
+        // Remove the rewrite rule - keep the /api prefix
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            console.log('Proxy Request:', proxyReq.method, proxyReq.path);
           });
-          proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log('Proxying request:', req.method, req.url);
+          proxy.on('proxyRes', (proxyRes) => {
+            console.log('Proxy Response:', proxyRes.statusCode);
           });
-          proxy.on('proxyRes', (proxyRes, req, res) => {
-            console.log('Received response:', proxyRes.statusCode, req.url);
+          proxy.on('error', (err) => {
+            console.error('Proxy Error:', err);
           });
         }
       }
-    }
+    } : undefined,
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
+    sourcemap: true
+  },
+  base: '/',
+  define: {
+    'process.env': process.env
   }
-})
+}));

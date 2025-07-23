@@ -6,51 +6,74 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
-const path = require('path');
 const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const { authLimiter } = require('./controllers/authController');
 
-// Initialize Express app
 const app = express();
 
 // Connect to MongoDB
 connectDB();
 
-// Security Middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https://*.tile.openstreetmap.org'],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
-    },
-  },
-  hsts: {
-    maxAge: 63072000, // 2 years in seconds
-    includeSubDomains: true,
-    preload: true,
-  },
-  referrerPolicy: { policy: 'same-origin' },
-}));
+// 1. Configure allowed origins - ensure this matches your frontend URLs exactly
+const allowedOrigins = [
+  process.env.CORS_ORIGIN || 'https://fitbuzz-frontend.onrender.com',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+];
 
-app.use(cors({
-  origin: [
-    process.env.CORS_ORIGIN || 'https://fitbuzz-frontend.onrender.com'
-  ],
+// 2. Enhanced CORS configuration with debugging
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      console.log('Allowed origin:', origin);
+      callback(null, true);
+    } else {
+      console.log('Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true,
-  maxAge: 86400
+  optionsSuccessStatus: 200,
+  preflightContinue: false
+};
+
+// 3. Apply CORS middleware - must come before other middleware
+app.use(cors(corsOptions));
+
+// 4. Explicit OPTIONS handler for preflight requests
+app.options('*', cors(corsOptions));
+
+// 5. Additional manual CORS headers as fallback
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  next();
+});
+
+// 6. Security middleware
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Rate limiting for API routes
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(mongoSanitize());
+app.use(xss());
+app.use(hpp());
+
+// 7. Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -59,104 +82,45 @@ const apiLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Body parser middleware
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// Data sanitization against NoSQL query injection
-app.use(mongoSanitize());
-
-// Data sanitization against XSS
-app.use(xss());
-
-// Prevent parameter pollution
-app.use(hpp());
-
-// Remove the static file serving for separate deployment
-// This section is commented out since we're deploying frontend separately
-/*
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist')));
-
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client/dist/index.html'));
-  });
-}
-*/
-
-// Apply rate limiting to API routes
+// 8. Routes
 app.use('/api/', apiLimiter);
-
-// Apply stricter rate limiting to auth routes
 app.use('/api/auth', authLimiter);
 
-// API Routes
+// Health check endpoint (no auth required)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    allowedOrigins: allowedOrigins
+  });
+});
+
+// API routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/workouts', require('./routes/workoutRoutes'));
 app.use('/api/exercises', require('./routes/exerciseRoutes'));
 app.use('/api/nutrition', require('./routes/nutritionRoutes'));
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    uptime: process.uptime()
-  });
-});
-
-// Root endpoint for API documentation
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Fitness Tracker API',
-    version: '1.0.0',
-    endpoints: {
-      health: '/api/health',
-      auth: '/api/auth',
-      workouts: '/api/workouts',
-      exercises: '/api/exercises',
-      nutrition: '/api/nutrition'
-    },
-    documentation: 'Visit the frontend application for full functionality'
-  });
-});
-
-// Error Handler - Must be last middleware
+// 9. Error handling
 app.use(errorHandler);
 
-// Handle 404 for API routes only
+// 10. 404 handler
 app.use('/api/*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'API endpoint not found'
-  });
-});
-
-// Handle other 404s
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'This is the API server. Please visit the frontend application.'
+  res.status(404).json({ 
+    success: false, 
+    message: 'API endpoint not found',
+    path: req.originalUrl
   });
 });
 
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  console.log('Allowed CORS origins:', allowedOrigins);
 });
 
-// Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error(`Error: ${err.message}`);
+  console.error('Unhandled Rejection:', err);
   server.close(() => process.exit(1));
-});
-
-// Handle SIGTERM for graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-  });
 });
