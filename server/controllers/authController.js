@@ -6,12 +6,16 @@ const { validateRegisterInput, validateLoginInput } = require('../utils/validate
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
 
-// Rate limiting for auth endpoints
+// Rate limiting for auth endpoints - Updated with trust proxy configuration
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // limit each IP to 20 requests per windowMs
   message: 'Too many requests from this IP, please try again later',
-  skipSuccessfulRequests: true
+  skipSuccessfulRequests: true,
+  // Add trust proxy configuration for Render.com
+  trustProxy: true,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // @desc    Register user 
@@ -39,8 +43,9 @@ exports.register = asyncHandler(async (req, res) => {
       errors: { email: 'User already exists with this email' }
     });
   }
+
   console.log('Registration attempt:', {
-    body: req.body,
+    body: { ...req.body, password: '[HIDDEN]' }, // Don't log password
     headers: req.headers
   });
 
@@ -100,9 +105,37 @@ exports.login = asyncHandler(async (req, res) => {
 
   const { email, password } = req.body;
 
-  // Find user and verify password
-  const user = await User.findOne({ email });
-  if (!user || !(await user.matchPassword(password))) {
+  // Validate that email and password are provided
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email and password are required',
+      errors: { email: 'Email and password are required' }
+    });
+  }
+
+  // Find user and explicitly select password field
+  const user = await User.findOne({ email }).select('+password');
+  
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid email or password',
+      errors: { email: 'Invalid email or password' }
+    });
+  }
+
+  // Verify password exists and compare
+  if (!user.password) {
+    console.error('User password is undefined for user:', user.email);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+
+  const isPasswordMatch = await user.matchPassword(password);
+  if (!isPasswordMatch) {
     return res.status(401).json({
       success: false,
       message: 'Invalid email or password',
@@ -448,8 +481,15 @@ exports.changePassword = asyncHandler(async (req, res) => {
     });
   }
 
-  // Get user with password
-  const user = await User.findById(req.user._id);
+  // Get user with password - explicitly select password field
+  const user = await User.findById(req.user._id).select('+password');
+
+  if (!user || !user.password) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found or invalid user data'
+    });
+  }
 
   // Check current password
   if (!(await user.matchPassword(currentPassword))) {
