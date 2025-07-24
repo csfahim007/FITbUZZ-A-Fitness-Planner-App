@@ -292,7 +292,7 @@ export default function Dashboard() {
               </p>
               {!weeklyCalories && (
                 <p className="text-gray-600 mt-2 text-sm">
-                  No calories burned this week. <Link to="/workouts/create" className="text-orange-600 hover:text-orange-700 font-semibold">Log a workout</Link> to start tracking!
+                  No calories burned this week. <Link to="/workouts" className="text-orange-600 hover:text-orange-700 font-semibold">Log a workout</Link> to start tracking!
                 </p>
               )}
             </div>
@@ -332,7 +332,7 @@ export default function Dashboard() {
             {!hasExerciseData && (
               <div className="text-center mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
                 <p className="text-gray-600 text-sm">
-                  No exercises logged. <Link to="/exercises/create" className="text-purple-600 hover:text-purple-700 font-semibold">Create an exercise</Link> to see muscle group distribution!
+                  No exercises logged. <Link to="/exercises" className="text-purple-600 hover:text-purple-700 font-semibold">Create an exercise</Link> to see muscle group distribution!
                 </p>
               </div>
             )}
@@ -388,7 +388,7 @@ export default function Dashboard() {
                       <TrendingUp className="h-6 w-6 text-teal-600" />
                     </div>
                     <p className="text-gray-600 font-semibold">No calorie data for the past week.</p>
-                    <Link to="/workouts/create" className="text-teal-600 hover:text-teal-700 font-bold">Log a workout</Link>
+                    <Link to="/workouts" className="text-teal-600 hover:text-teal-700 font-bold">Log a workout</Link>
                     <span className="text-gray-600"> to see trends!</span>
                   </div>
                 </div>
@@ -438,7 +438,7 @@ export default function Dashboard() {
                   <h3 className="text-xl font-bold text-gray-700 mb-2">No workouts yet</h3>
                   <p className="text-gray-600 mb-4">Start your fitness journey today!</p>
                   <Link 
-                    to="/workouts/create" 
+                    to="/workouts" 
                     className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-lg px-6 py-3 font-semibold transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg inline-flex items-center gap-2"
                   >
                     <Plus size={18} />
@@ -555,7 +555,7 @@ export default function Dashboard() {
               
               <div className="flex justify-center pt-4">
                 <Link
-                  to="/workouts/create"
+                  to="/workouts"
                   className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl shadow-lg hover:shadow-xl py-4 px-8 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 flex items-center gap-3"
                 >
                   <Plus size={20} />
