@@ -11,7 +11,7 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    fitnessGoal: 'maintenance'
+    fitnessGoal: 'general_fitness' // Updated default to match backend
   });
 
   const [errors, setErrors] = useState({});
@@ -177,10 +177,11 @@ export default function Register() {
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
             >
-              <option value="weight-loss">Weight Loss</option>
-              <option value="muscle-gain">Muscle Gain</option>
+              <option value="weight_loss">Weight Loss</option>
+              <option value="muscle_gain">Muscle Gain</option>
               <option value="endurance">Endurance</option>
-              <option value="maintenance">Maintenance</option>
+              <option value="strength">Strength</option>
+              <option value="general_fitness">General Fitness</option>
             </select>
           </div>
           

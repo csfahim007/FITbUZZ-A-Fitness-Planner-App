@@ -20,11 +20,11 @@ const userSchema = new mongoose.Schema({
     select: false, // Don't include in queries by default
     minlength: 6,
   },
-  fitnessGoal: {
-    type: String,
-    enum: ['weight_loss', 'muscle_gain', 'endurance', 'strength', 'general_fitness', ''],
-    default: '',
-  },
+ fitnessGoal: {
+  type: String,
+  enum: ['weight-loss', 'muscle-gain', 'endurance', 'maintenance'], // Match frontend
+  default: 'maintenance'
+},
   age: {
     type: Number,
     min: 13,
