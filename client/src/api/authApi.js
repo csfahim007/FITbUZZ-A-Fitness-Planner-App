@@ -84,27 +84,27 @@ export const authApi = createApi({
       }),
     }),
     updateProfile: builder.mutation({
-      query: (profileData) => ({
-        url: '/me',
-        method: 'PUT',
-        body: profileData,
-      }),
-      invalidatesTags: ['User'],
-      transformResponse: (response) => {
-        console.log('Update profile response:', response);
-        return response;
+  query: (profileData) => ({
+    url: '/me',
+    method: 'PUT',
+    body: profileData,
+  }),
+  invalidatesTags: ['User'],
+  transformResponse: (response) => {
+    console.log('Update profile response:', response);
+    return response;
+  },
+  transformErrorResponse: (response) => {
+    console.error('Update profile error:', response);
+    return {
+      status: response.status,
+      data: {
+        message: response.data?.message || 'Failed to update profile',
+        errors: response.data?.errors || {},
       },
-      transformErrorResponse: (response) => {
-        console.error('Update profile error:', response);
-        return {
-          status: response.status,
-          data: {
-            message: response.data?.message || 'Failed to update profile',
-            errors: response.data?.errors || {}
-          }
-        };
-      }
-    }),
+    };
+  },
+}),
     changePassword: builder.mutation({
       query: (passwordData) => ({
         url: '/change-password',

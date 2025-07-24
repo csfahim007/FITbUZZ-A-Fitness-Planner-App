@@ -6,11 +6,6 @@ const { validateRegisterInput, validateLoginInput } = require('../utils/validate
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
 
-// Generate CSRF token
-// const generateCSRFToken = () => {
-//   return crypto.randomBytes(32).toString('hex');
-// };
-
 // Rate limiting for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -66,7 +61,6 @@ exports.register = asyncHandler(async (req, res) => {
 
   // Generate tokens
   const token = generateToken(user._id);
-//   const csrfToken = generateCSRFToken();
 
   // Set secure cookies
   res.cookie('token', token, {
@@ -76,13 +70,6 @@ exports.register = asyncHandler(async (req, res) => {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     path: '/'
   });
-
-//   res.cookie('csrfToken', csrfToken, {
-//     secure: process.env.NODE_ENV === 'production',
-//     sameSite: 'strict',
-//     maxAge: 30 * 24 * 60 * 60 * 1000,
-//     path: '/'
-//   });
 
   // Send response
   res.status(201).json({
@@ -125,7 +112,6 @@ exports.login = asyncHandler(async (req, res) => {
 
   // Generate tokens
   const token = generateToken(user._id);
-//   const csrfToken = generateCSRFToken();
 
   // Set secure cookies
   res.cookie('token', token, {
@@ -135,13 +121,6 @@ exports.login = asyncHandler(async (req, res) => {
     maxAge: 30 * 24 * 60 * 60 * 1000,
     path: '/'
   });
-
-//   res.cookie('csrfToken', csrfToken, {
-//     secure: process.env.NODE_ENV === 'production',
-//     sameSite: 'strict',
-//     maxAge: 30 * 24 * 60 * 60 * 1000,
-//     path: '/'
-//   });
 
   // Send response
   res.json({
@@ -271,7 +250,6 @@ exports.protect = asyncHandler(async (req, res, next) => {
       });
     }
 
-    // CSRF verification removed - no longer needed
     next();
   } catch (err) {
     return res.status(401).json({ 
@@ -281,13 +259,141 @@ exports.protect = asyncHandler(async (req, res, next) => {
   }
 });
 
+// @desc    Update user profile
+// @route   PUT /api/auth/me
+// @access  Private
 exports.updateMe = asyncHandler(async (req, res) => {
+  console.log('Update request body:', req.body);
+  console.log('User ID:', req.user._id);
+
+  // Define allowed updates
+  const allowedUpdates = [
+    'name',
+    'email',
+    'fitnessGoal',
+    'age',
+    'weight',
+    'height',
+    'activityLevel',
+    'notifications',
+  ];
+
+  // Validate input
   const updates = {};
+  const errors = {};
 
-  if (req.body.name) updates.name = req.body.name;
-  if (req.body.email) updates.email = req.body.email;
-  if (req.body.fitnessGoal) updates.fitnessGoal = req.body.fitnessGoal;
+  // Check for invalid fields
+  const invalidFields = Object.keys(req.body).filter(
+    (key) => !allowedUpdates.includes(key) && !key.startsWith('notifications.')
+  );
+  if (invalidFields.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid fields provided',
+      errors: { invalidFields: 'Only specific fields can be updated' },
+    });
+  }
 
+  // Validate fields
+  if (req.body.name !== undefined) {
+    if (typeof req.body.name !== 'string' || req.body.name.trim() === '') {
+      errors.name = 'Name must be a non-empty string';
+    } else {
+      updates.name = req.body.name.trim();
+    }
+  }
+
+  if (req.body.email !== undefined) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (typeof req.body.email !== 'string' || !emailRegex.test(req.body.email)) {
+      errors.email = 'Invalid email format';
+    } else {
+      // Check if email is already in use by another user
+      const userExists = await User.findOne({ email: req.body.email });
+      if (userExists && userExists._id.toString() !== req.user._id.toString()) {
+        errors.email = 'Email is already in use';
+      } else {
+        updates.email = req.body.email.toLowerCase().trim();
+      }
+    }
+  }
+
+  if (req.body.fitnessGoal !== undefined) {
+    const validGoals = ['', 'weight_loss', 'muscle_gain', 'endurance', 'strength', 'general_fitness'];
+    if (!validGoals.includes(req.body.fitnessGoal)) {
+      errors.fitnessGoal = 'Invalid fitness goal';
+    } else {
+      updates.fitnessGoal = req.body.fitnessGoal;
+    }
+  }
+
+  if (req.body.age !== undefined) {
+    const age = Number(req.body.age);
+    if (isNaN(age) || age < 13 || age > 120) {
+      errors.age = 'Age must be a number between 13 and 120';
+    } else {
+      updates.age = age;
+    }
+  }
+
+  if (req.body.weight !== undefined) {
+    const weight = Number(req.body.weight);
+    if (isNaN(weight) || weight < 20 || weight > 500) {
+      errors.weight = 'Weight must be a number between 20 and 500';
+    } else {
+      updates.weight = weight;
+    }
+  }
+
+  if (req.body.height !== undefined) {
+    const height = Number(req.body.height);
+    if (isNaN(height) || height < 100 || height > 250) {
+      errors.height = 'Height must be a number between 100 and 250';
+    } else {
+      updates.height = height;
+    }
+  }
+
+  if (req.body.activityLevel !== undefined) {
+    const validLevels = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
+    if (!validLevels.includes(req.body.activityLevel)) {
+      errors.activityLevel = 'Invalid activity level';
+    } else {
+      updates.activityLevel = req.body.activityLevel;
+    }
+  }
+
+  if (req.body.notifications !== undefined) {
+    const validNotifications = [
+      'workoutReminders',
+      'nutritionTips',
+      'progressUpdates',
+      'emailUpdates',
+    ];
+    const notifications = {};
+    for (const key of validNotifications) {
+      if (req.body.notifications[key] !== undefined) {
+        if (typeof req.body.notifications[key] !== 'boolean') {
+          errors[`notifications.${key}`] = `${key} must be a boolean`;
+        } else {
+          notifications[key] = req.body.notifications[key];
+        }
+      }
+    }
+    if (Object.keys(notifications).length > 0) {
+      updates.notifications = notifications;
+    }
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors,
+    });
+  }
+
+  // Apply updates
   const updatedUser = await User.findByIdAndUpdate(
     req.user._id,
     { $set: updates },
@@ -295,17 +401,20 @@ exports.updateMe = asyncHandler(async (req, res) => {
   ).select('-password -__v');
 
   if (!updatedUser) {
-    return res.status(404).json({ 
-      success: false, 
-      message: 'User not found' 
+    return res.status(404).json({
+      success: false,
+      message: 'User not found',
     });
   }
 
+  console.log('Updated user result:', updatedUser);
+
   res.status(200).json({
     success: true,
-    data: updatedUser
+    data: updatedUser,
   });
 });
+
 // @desc    Admin middleware
 exports.admin = asyncHandler(async (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
@@ -317,8 +426,6 @@ exports.admin = asyncHandler(async (req, res, next) => {
     });
   }
 });
-
-// Add these methods to your authController.js
 
 // @desc    Change user password
 // @route   PUT /api/auth/change-password
@@ -423,5 +530,6 @@ exports.getUserStats = asyncHandler(async (req, res) => {
     data: stats
   });
 });
+
 // Apply rate limiting to auth endpoints
 exports.authLimiter = authLimiter;
