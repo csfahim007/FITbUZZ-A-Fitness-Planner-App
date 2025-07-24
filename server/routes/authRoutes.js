@@ -1,9 +1,8 @@
-// authRoutes.js
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 
-// Apply rate limiting to auth routes
+// Apply auth-specific rate limiting
 router.use(authController.authLimiter);
 
 // Public routes
@@ -22,7 +21,11 @@ router.get('/stats', authController.protect, authController.getUserStats);
 
 // Admin route example
 router.get('/admin', authController.protect, authController.admin, (req, res) => {
-  res.json({ message: 'Admin access granted' });
+  res.json({ 
+    success: true,
+    message: 'Admin access granted',
+    user: req.user
+  });
 });
 
 module.exports = router;
