@@ -318,5 +318,110 @@ exports.admin = asyncHandler(async (req, res, next) => {
   }
 });
 
+// Add these methods to your authController.js
+
+// @desc    Change user password
+// @route   PUT /api/auth/change-password
+// @access  Private
+exports.changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  // Validate input
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      success: false,
+      message: 'Current password and new password are required'
+    });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: 'New password must be at least 6 characters long'
+    });
+  }
+
+  // Get user with password
+  const user = await User.findById(req.user._id);
+
+  // Check current password
+  if (!(await user.matchPassword(currentPassword))) {
+    return res.status(400).json({
+      success: false,
+      message: 'Current password is incorrect'
+    });
+  }
+
+  // Update password
+  user.password = newPassword;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Password changed successfully'
+  });
+});
+
+// @desc    Delete user account
+// @route   DELETE /api/auth/delete-account
+// @access  Private
+exports.deleteAccount = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  // Delete all user-related data
+  // You might want to delete workouts, nutrition entries, etc.
+  // await Workout.deleteMany({ user: userId });
+  // await NutritionEntry.deleteMany({ user: userId });
+  
+  // Delete the user
+  await User.findByIdAndDelete(userId);
+
+  // Clear cookies
+  res.clearCookie('token');
+  res.clearCookie('csrfToken');
+
+  res.status(200).json({
+    success: true,
+    message: 'Account deleted successfully'
+  });
+});
+
+// @desc    Upload user avatar
+// @route   POST /api/auth/upload-avatar
+// @access  Private
+exports.uploadAvatar = asyncHandler(async (req, res) => {
+  // This would require multer middleware for file upload
+  // For now, just return a placeholder response
+  res.status(200).json({
+    success: true,
+    message: 'Avatar upload functionality coming soon',
+    data: {
+      avatarUrl: '/default-avatar.png'
+    }
+  });
+});
+
+// @desc    Get user statistics
+// @route   GET /api/auth/stats
+// @access  Private
+exports.getUserStats = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  
+  // Calculate user statistics
+  // This would involve aggregating data from workouts, nutrition, etc.
+  const stats = {
+    totalWorkouts: 0,
+    daysActive: 0,
+    caloriesBurned: 0,
+    streakDays: 0,
+    joinDate: req.user.createdAt,
+    // Add more stats as needed
+  };
+
+  res.status(200).json({
+    success: true,
+    data: stats
+  });
+});
 // Apply rate limiting to auth endpoints
 exports.authLimiter = authLimiter;

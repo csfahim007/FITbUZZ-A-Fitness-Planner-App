@@ -51,7 +51,7 @@ export default function ExerciseList() {
             Your Exercises
           </h1>
           <Link
-            to="/exercises/create"
+            to="/exercises/new"
             className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 shadow-md hover:shadow-lg font-semibold"
             aria-label="Add a new exercise"
           >
@@ -71,7 +71,7 @@ export default function ExerciseList() {
               <h3 className="text-lg font-semibold text-gray-800">No Exercises Found</h3>
               <p className="text-gray-500 mt-2">Start by creating your first exercise!</p>
               <Link
-                to="/exercises/create"
+                to="/exercises/new"
                 className="mt-4 inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                 aria-label="Create your first exercise"
               >

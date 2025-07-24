@@ -14,7 +14,10 @@ export const authApi = createApi({
         headers.set('Authorization', `Bearer ${token}`);
       }
       
-      headers.set('Content-Type', 'application/json');
+      // Don't set Content-Type for FormData (file uploads)
+      if (!headers.get('formData')) {
+        headers.set('Content-Type', 'application/json');
+      }
       headers.set('Accept', 'application/json');
       return headers;
     },
@@ -33,6 +36,7 @@ export const authApi = createApi({
       }
     }
   }),
+  tagTypes: ['User'],
   endpoints: (builder) => ({
     register: builder.mutation({
       query: (userData) => ({
@@ -79,6 +83,92 @@ export const authApi = createApi({
         method: 'POST',
       }),
     }),
+    updateProfile: builder.mutation({
+      query: (profileData) => ({
+        url: '/me',
+        method: 'PUT',
+        body: profileData,
+      }),
+      invalidatesTags: ['User'],
+      transformResponse: (response) => {
+        console.log('Update profile response:', response);
+        return response;
+      },
+      transformErrorResponse: (response) => {
+        console.error('Update profile error:', response);
+        return {
+          status: response.status,
+          data: {
+            message: response.data?.message || 'Failed to update profile',
+            errors: response.data?.errors || {}
+          }
+        };
+      }
+    }),
+    changePassword: builder.mutation({
+      query: (passwordData) => ({
+        url: '/change-password',
+        method: 'PUT',
+        body: passwordData,
+      }),
+      transformResponse: (response) => {
+        console.log('Change password response:', response);
+        return response;
+      },
+      transformErrorResponse: (response) => {
+        console.error('Change password error:', response);
+        return {
+          status: response.status,
+          data: {
+            message: response.data?.message || 'Failed to change password',
+            errors: response.data?.errors || {}
+          }
+        };
+      }
+    }),
+    deleteAccount: builder.mutation({
+      query: () => ({
+        url: '/delete-account',
+        method: 'DELETE',
+      }),
+      transformResponse: (response) => {
+        console.log('Delete account response:', response);
+        return response;
+      },
+      transformErrorResponse: (response) => {
+        console.error('Delete account error:', response);
+        return {
+          status: response.status,
+          data: {
+            message: response.data?.message || 'Failed to delete account',
+            errors: response.data?.errors || {}
+          }
+        };
+      }
+    }),
+    uploadAvatar: builder.mutation({
+      query: (formData) => ({
+        url: '/upload-avatar',
+        method: 'POST',
+        body: formData,
+        formData: true,
+      }),
+      invalidatesTags: ['User'],
+      transformResponse: (response) => {
+        console.log('Upload avatar response:', response);
+        return response;
+      },
+      transformErrorResponse: (response) => {
+        console.error('Upload avatar error:', response);
+        return {
+          status: response.status,
+          data: {
+            message: response.data?.message || 'Failed to upload avatar',
+            errors: response.data?.errors || {}
+          }
+        };
+      }
+    }),
   }),
 });
 
@@ -88,4 +178,8 @@ export const {
   useLogoutMutation,
   useGetMeQuery,
   useRefreshTokenMutation,
+  useUpdateProfileMutation,
+  useChangePasswordMutation,
+  useDeleteAccountMutation,
+  useUploadAvatarMutation,
 } = authApi;

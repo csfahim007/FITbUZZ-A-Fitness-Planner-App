@@ -1,4 +1,7 @@
+// App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
@@ -11,6 +14,7 @@ import ExerciseDetail from './pages/exercise/ExerciseDetail';
 import ExerciseCreate from './pages/exercise/ExerciseCreate';
 import NutritionTracker from './pages/nutrition/NutritionTracker';
 import Dashboard from './pages/Dashboard';
+import MyAccount from './pages/MyAccount';
 import NotFound from './pages/NotFound';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
@@ -21,9 +25,9 @@ import Contact from './components/common/Contact';
 function App() {
   return (
     <BrowserRouter>
-      <div className="flex flex-col min-h-screen m-0 p-0 w-full">
+      <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-grow w-full">
+        <main className="flex-grow">
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
@@ -36,12 +40,13 @@ function App() {
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/my-account" element={<MyAccount />} />
               <Route path="/workouts" element={<WorkoutList />} />
-              <Route path="/workouts/create" element={<WorkoutCreate />} />
               <Route path="/workouts/:id" element={<WorkoutDetail />} />
+              <Route path="/workouts/new" element={<WorkoutCreate />} />
               <Route path="/exercises" element={<ExerciseList />} />
-              <Route path="/exercises/create" element={<ExerciseCreate />} />
               <Route path="/exercises/:id" element={<ExerciseDetail />} />
+              <Route path="/exercises/new" element={<ExerciseCreate />} />
               <Route path="/nutrition" element={<NutritionTracker />} />
             </Route>
             
@@ -51,6 +56,20 @@ function App() {
         </main>
         <Footer />
       </div>
+      
+      {/* Toast Container for notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </BrowserRouter>
   );
 }
