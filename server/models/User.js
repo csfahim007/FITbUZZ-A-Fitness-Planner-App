@@ -22,8 +22,8 @@ const userSchema = new mongoose.Schema({
   },
  fitnessGoal: {
   type: String,
-  enum: ['weight-loss', 'muscle-gain', 'endurance', 'maintenance'], // Match frontend
-  default: 'maintenance'
+  enum: ['weight_loss', 'muscle_gain', 'endurance', 'strength', 'general_fitness'],
+  default: 'general_fitness'
 },
   age: {
     type: Number,

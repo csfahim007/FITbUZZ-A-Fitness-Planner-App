@@ -32,7 +32,19 @@ exports.register = asyncHandler(async (req, res) => {
     });
   }
 
-  const { name, email, password, fitnessGoal } = req.body;
+  const { name, email, password, confirmPassword, fitnessGoal } = req.body;
+
+  // Add confirmPassword validation
+  if (password !== confirmPassword) {
+    return res.status(400).json({
+      success: false,
+      message: 'Passwords do not match',
+      errors: { confirmPassword: 'Passwords do not match' }
+    });
+  }
+
+
+
 
   // Check if user exists
   const userExists = await User.findOne({ email });

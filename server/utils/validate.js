@@ -40,8 +40,8 @@ module.exports = {
       errors.confirmPassword = 'Passwords must match';
     }
 
-    // Fitness Goal validation
-    const validGoals = ['weight-loss', 'muscle-gain', 'endurance', 'maintenance'];
+    // Fitness Goal validation - FIXED TO MATCH FRONTEND VALUES
+    const validGoals = ['weight_loss', 'muscle_gain', 'endurance', 'strength', 'general_fitness'];
     if (!validGoals.includes(data.fitnessGoal)) {
       errors.fitnessGoal = 'Invalid fitness goal selected';
     }
