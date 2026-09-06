@@ -125,9 +125,6 @@ userSchema.methods.toPublicJSON = function () {
   return userObject;
 };
 
-// Index for faster email lookups
-userSchema.index({ email: 1 });
-
 // Virtual for full name (if you want to add firstName/lastName later)
 userSchema.virtual('profile').get(function () {
   return {

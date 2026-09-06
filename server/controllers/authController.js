@@ -6,14 +6,12 @@ const { validateRegisterInput, validateLoginInput } = require('../utils/validate
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
 
-// Rate limiting for auth endpoints - Updated with trust proxy configuration
+// Rate limiting for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // limit each IP to 20 requests per windowMs
   message: 'Too many requests from this IP, please try again later',
   skipSuccessfulRequests: true,
-  // Add trust proxy configuration for Render.com
-  trustProxy: true,
   standardHeaders: true,
   legacyHeaders: false,
 });

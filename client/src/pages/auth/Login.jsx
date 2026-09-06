@@ -162,7 +162,7 @@ export default function Login() {
           </motion.button>
           
           <div className="text-center mt-6 text-sm text-gray-600">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link to="/register" className="text-cyan-600 hover:text-cyan-700 font-semibold">
               Sign up
             </Link>

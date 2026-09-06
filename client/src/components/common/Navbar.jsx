@@ -46,7 +46,7 @@ export default function Navbar() {
       await logoutUser().unwrap();
       dispatch(logout());
       navigate('/');
-    } catch (error) {
+    } catch {
       // Even if the API call fails, clear local state
       dispatch(logout());
       navigate('/');

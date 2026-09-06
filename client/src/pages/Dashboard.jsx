@@ -43,15 +43,19 @@ export default function Dashboard() {
 
   // Clean up charts on unmount to prevent canvas reuse errors
   useEffect(() => {
+    const chart1 = chartRef1.current;
+    const chart2 = chartRef2.current;
+    const lineChart = lineChartRef.current;
+
     return () => {
-      if (chartRef1.current) {
-        chartRef1.current.destroy();
+      if (chart1) {
+        chart1.destroy();
       }
-      if (chartRef2.current) {
-        chartRef2.current.destroy();
+      if (chart2) {
+        chart2.destroy();
       }
-      if (lineChartRef.current) {
-        lineChartRef.current.destroy();
+      if (lineChart) {
+        lineChart.destroy();
       }
     };
   }, []);

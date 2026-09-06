@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useRegisterMutation } from '../../api/authApi';
 import { useNavigate, Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { setCredentials } from '../../features/auth/authSlice';
 import { motion } from 'framer-motion';
 
 export default function Register() {
@@ -17,7 +15,6 @@ export default function Register() {
   const [errors, setErrors] = useState({});
   const [register, { isLoading }] = useRegisterMutation();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const handleChange = (e) => {
     const { name, value } = e.target;

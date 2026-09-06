@@ -415,7 +415,7 @@ const BotpressChat = ({ isOpen, onClose }) => {
           </div>
 
           {/* Custom Styles for Botpress */}
-          <style jsx>{`
+          <style>{`
             #webchat-container .bpWebchat {
               position: unset !important;
               width: 100% !important;
@@ -469,7 +469,7 @@ const Testimonial = ({ name, feedback }) => (
     transition={{ duration: 0.5 }}
     className="bg-gray-50 p-4 rounded-lg shadow-sm"
   >
-    <p className="text-gray-700 italic">"{feedback}"</p>
+    <p className="text-gray-700 italic">&quot;{feedback}&quot;</p>
     <div className="mt-3 text-sm text-gray-500">— {name}</div>
   </motion.div>
 );

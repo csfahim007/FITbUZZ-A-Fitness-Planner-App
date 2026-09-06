@@ -23,7 +23,7 @@ export default function NotFound() {
         transition={{ duration: 0.5, delay: 0.4 }}
         className="text-xl text-gray-600 mb-8"
       >
-        Oops! The page you're looking for doesn't exist.
+        Oops! The page you&apos;re looking for doesn&apos;t exist.
       </motion.p>
       <motion.div
         initial={{ opacity: 0, y: 20 }}

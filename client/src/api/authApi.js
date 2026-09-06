@@ -31,7 +31,7 @@ export const authApi = createApi({
       const text = await response.text();
       try {
         return JSON.parse(text);
-      } catch (err) {
+      } catch {
         return { error: 'Invalid JSON response', rawBody: text };
       }
     }

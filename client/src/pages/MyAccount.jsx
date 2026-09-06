@@ -15,7 +15,6 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import {
   useGetMeQuery,
-  useLogoutMutation,
   useUpdateProfileMutation,
   useChangePasswordMutation,
   useDeleteAccountMutation,
@@ -26,7 +25,6 @@ import { toast } from 'react-toastify';
 export default function MyAccount() {
   const { user, token } = useSelector((state) => state.auth);
   const { data: currentUser, isLoading, refetch } = useGetMeQuery();
-  const [logoutUser] = useLogoutMutation();
   const [updateProfile] = useUpdateProfileMutation();
   const [changePassword] = useChangePasswordMutation();
   const [deleteAccount] = useDeleteAccountMutation();
@@ -62,6 +60,7 @@ export default function MyAccount() {
 
   useEffect(() => {
     if (currentUser?.data) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         name: currentUser.data.name || '',
         email: currentUser.data.email || '',

@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => ({
   preview: {
     host: true,
     port: 4173,
+    allowedHosts: ['fitbuzz.cloudafk.xyz'],
     proxy: apiProxy,
   },
 

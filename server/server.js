@@ -130,7 +130,7 @@ app.use(errorHandler);
 
 // 14. Start server
 const PORT = Number(process.env.PORT || 5001);
-const HOST = process.env.HOST || '127.0.0.1';
+const HOST = process.env.HOST || '0.0.0.0';
 const server = app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on ${HOST}:${PORT}`);
   console.log('🌐 Allowed CORS origins:', allowedOrigins);
