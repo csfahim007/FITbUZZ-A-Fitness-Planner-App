@@ -19,7 +19,11 @@ connectDB();
 const allowedOrigins = [
   process.env.CORS_ORIGIN || 'https://fitbuzz-frontend.onrender.com',
   'http://localhost:5173',
-  'http://127.0.0.1:5173'
+  'http://127.0.0.1:5173',
+  'http://localhost:5175',
+  'http://127.0.0.1:5175',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173'
 ];
 
 // 2. CORS configuration
@@ -85,7 +89,6 @@ const apiLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: true, // Important for Render.com
   skip: (req) => {
     // Skip rate limiting for health checks
     return req.path === '/api/health';
@@ -126,9 +129,10 @@ app.use('/api/*', (req, res) => {
 app.use(errorHandler);
 
 // 14. Start server
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+const PORT = Number(process.env.PORT || 5001);
+const HOST = process.env.HOST || '127.0.0.1';
+const server = app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on ${HOST}:${PORT}`);
   console.log('🌐 Allowed CORS origins:', allowedOrigins);
   console.log('🔒 Security middleware enabled');
 });
