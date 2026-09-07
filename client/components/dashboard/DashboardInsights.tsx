@@ -26,9 +26,6 @@ export function DashboardInsights() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <Loading label="Building your insights..." />;
-  if (error) return <ApiState message={error} />;
-
   const today = new Date();
   const startOfWeek = new Date(today);
   startOfWeek.setDate(today.getDate() - today.getDay());
@@ -38,47 +35,63 @@ export function DashboardInsights() {
   const workoutDate = (workout: Workout) => workout.date || workout.createdAt;
   const isSameDay = (value: string | undefined, date: Date) => (value ? new Date(value).toDateString() === date.toDateString() : false);
 
-  const weekly = workouts.filter((workout) => workoutDate(workout) && new Date(workoutDate(workout) as string) >= startOfWeek);
-  const monthly = workouts.filter((workout) => workoutDate(workout) && new Date(workoutDate(workout) as string) >= startOfMonth);
-  const calories = weekly.reduce((sum, workout) => sum + (workout.totalCalories || 0), 0);
+  const summary = useMemo(() => {
+    const weekly = workouts.filter((workout) => workoutDate(workout) && new Date(workoutDate(workout) as string) >= startOfWeek);
+    const monthly = workouts.filter((workout) => workoutDate(workout) && new Date(workoutDate(workout) as string) >= startOfMonth);
+    const calories = weekly.reduce((sum, workout) => sum + (workout.totalCalories || 0), 0);
 
-  const muscleGroups = exercises.reduce<Record<string, number>>((groups, exercise) => {
-    groups[exercise.muscleGroup] = (groups[exercise.muscleGroup] || 0) + 1;
-    return groups;
-  }, {});
+    const muscleGroups = exercises.reduce<Record<string, number>>((groups, exercise) => {
+      groups[exercise.muscleGroup] = (groups[exercise.muscleGroup] || 0) + 1;
+      return groups;
+    }, {});
 
-  const totalExercises = Object.values(muscleGroups).reduce((sum, count) => sum + count, 0);
-  const maxGroupCount = Math.max(...Object.values(muscleGroups), 1);
+    const totalExercises = Object.values(muscleGroups).reduce((sum, count) => sum + count, 0);
+    const maxGroupCount = Math.max(...Object.values(muscleGroups), 1);
 
-  const weekDays = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(startOfWeek);
-    date.setDate(startOfWeek.getDate() + index);
+    const weekDays = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + index);
 
-    return {
-      label: dayFormatter.format(date),
-      value: workouts
-        .filter((workout) => isSameDay(workoutDate(workout), date))
-        .reduce((sum, workout) => sum + (workout.totalCalories || 0), 0),
-    };
-  });
-
-  const pieSegments = useMemo(() => {
-    const entries = Object.entries(muscleGroups);
-    if (!entries.length) {
-      return 'conic-gradient(#e2e8f0 0 100%)';
-    }
-
-    let current = 0;
-    const segments = entries.map(([group, count], index) => {
-      const color = palette[index % palette.length];
-      const start = current;
-      const end = current + (count / totalExercises) * 100;
-      current = end;
-      return `${color} ${start}% ${end}%`;
+      return {
+        label: dayFormatter.format(date),
+        value: workouts
+          .filter((workout) => isSameDay(workoutDate(workout), date))
+          .reduce((sum, workout) => sum + (workout.totalCalories || 0), 0),
+      };
     });
 
-    return `conic-gradient(${segments.join(', ')})`;
-  }, [muscleGroups, totalExercises]);
+    const entries = Object.entries(muscleGroups);
+    const pieSegments = !entries.length
+      ? 'conic-gradient(#e2e8f0 0 100%)'
+      : (() => {
+          let current = 0;
+          const segments = entries.map(([group, count], index) => {
+            const color = palette[index % palette.length];
+            const start = current;
+            const end = current + (count / totalExercises) * 100;
+            current = end;
+            return `${color} ${start}% ${end}%`;
+          });
+
+          return `conic-gradient(${segments.join(', ')})`;
+        })();
+
+    return {
+      weekly,
+      monthly,
+      calories,
+      totalExercises,
+      maxGroupCount,
+      weekDays,
+      muscleGroups,
+      pieSegments,
+    };
+  }, [exercises, startOfMonth, startOfWeek, workouts]);
+
+  if (loading) return <Loading label="Building your insights..." />;
+  if (error) return <ApiState message={error} />;
+
+  const { weekly, monthly, calories, totalExercises, maxGroupCount, weekDays, muscleGroups, pieSegments } = summary;
 
   return (
     <section className="mt-10 space-y-6">

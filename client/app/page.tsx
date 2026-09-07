@@ -77,35 +77,35 @@ export default function HomePage() {
         ))}
       </section>
 
-      <section className="bg-slate-50 py-18">
-        <div className="content-container grid gap-10 lg:grid-cols-[1fr_1fr]">
-          <div className="rounded-[2rem] bg-white p-8 shadow-sm ring-1 ring-slate-200">
+      <section className="bg-slate-50 py-16 sm:py-20">
+        <div className="content-container grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-stretch">
+          <div className="rounded-[2rem] border-2 border-black bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.12)] sm:p-8">
             <p className="text-sm font-bold uppercase tracking-[0.25em] text-mint">Built for real plans</p>
-            <h2 className="mt-3 text-3xl font-black text-ink">Everything you need, without the noise.</h2>
+            <h2 className="mt-3 text-3xl font-black text-ink sm:text-4xl">Everything you need, without the noise.</h2>
             <ul className="mt-6 space-y-4 text-slate-600">
               {bodyHighlights.map((item) => (
-                <li key={item} className="flex gap-3">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-mint" />
-                  <span>{item}</span>
+                <li key={item} className="flex gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-mint" />
+                  <span className="leading-7">{item}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-[2rem] bg-ink p-8 text-white shadow-sm ring-1 ring-slate-700">
-            <p className="text-sm font-bold uppercase tracking-[0.25em] text-lime">Coach in your pocket</p>
+          <div className="rounded-[2rem] border border-slate-200 bg-slate-100 p-6 text-ink shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.12)] sm:p-8">
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-mint">Coach in your pocket</p>
             <h2 className="mt-3 text-3xl font-black">A better system for training and recovery.</h2>
-            <div className="mt-6 space-y-4 text-slate-300">
-              <div className="rounded-xl border border-slate-700 bg-white/5 p-4">
-                <p className="font-bold text-white">Weekly focus</p>
+            <div className="mt-6 space-y-4 text-slate-700">
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="font-bold text-ink">Weekly focus</p>
                 <p className="mt-1">Strength + mobility with a simple recovery rhythm.</p>
               </div>
-              <div className="rounded-xl border border-slate-700 bg-white/5 p-4">
-                <p className="font-bold text-white">Nutrition cues</p>
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="font-bold text-ink">Nutrition cues</p>
                 <p className="mt-1">Log food, review consistency, and keep energy high.</p>
               </div>
-              <div className="rounded-xl border border-slate-700 bg-white/5 p-4">
-                <p className="font-bold text-white">Body-first progress</p>
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="font-bold text-ink">Body-first progress</p>
                 <p className="mt-1">Use your own data to keep training sustainable and motivating.</p>
               </div>
             </div>
