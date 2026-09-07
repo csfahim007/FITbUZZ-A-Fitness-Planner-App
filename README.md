@@ -2,11 +2,10 @@
 
 **FITbUZZ** is a full-stack fitness planning and progress-tracking platform designed to help users organize workouts, manage exercises, track nutrition, and visualize their fitness progress from a single dashboard.
 
-The project demonstrates a complete **React + Node.js + Express + MongoDB** application with JWT authentication, protected API routes, centralized frontend state management, data visualization, and a production deployment workflow.
+The project demonstrates a complete **Next.js + Node.js + Express + MongoDB** application with JWT authentication, protected API routes, centralized frontend state management, data visualization, and a production deployment workflow.
 
 🌐 **Live Project:** https://fitbuzz.cloudafk.xyz/
 
----
 
 ## ✨ Overview
 
@@ -439,13 +438,12 @@ This separation makes the codebase easier to reason about and allows the fronten
 
 | Technology    | Purpose                     |
 | ------------- | --------------------------- |
-| React 18      | UI framework                |
+| Next.js 15    | React framework and App Router |
 | Vite          | Development & build tooling |
-| React Router  | Client-side routing         |
-| Redux Toolkit | State management            |
+| TypeScript    | Static typing               |
+| React 18      | UI framework                |
 | Tailwind CSS  | Styling                     |
-| Chart.js      | Data visualization          |
-| Recharts      | React-based charts          |
+| Fetch API     | Centralized REST API client |
 
 ## Backend
 
@@ -493,7 +491,6 @@ npm install
 cd ../server
 npm install
 ```
-
 ## 4. Configure Environment Variables
 
 Create:
@@ -525,7 +522,6 @@ NODE_ENV=development
 cd server
 npm run dev
 ```
-
 The API runs on:
 
 ```text
@@ -545,7 +541,6 @@ The Vite development server usually runs on:
 
 ```text
 http://localhost:5173
-```
 
 ---
 
@@ -589,7 +584,6 @@ Create an optimized production build.
 npm run lint
 ```
 
-Run ESLint.
 
 ```bash
 npm run preview
@@ -618,7 +612,6 @@ Start the API using Node.js.
 FITbUZZ includes a deployment script:
 
 ```bash
-./deploy.sh
 ```
 
 The deployment workflow is designed to automate the process of updating the application and restarting the production services.
@@ -651,7 +644,6 @@ The production environment separates the frontend and backend into independent s
                             │
                             ▼
                      ┌─────────────┐
-                     │    NGINX    │
                      │ Reverse     │
                      │ Proxy       │
                      └──────┬──────┘
@@ -666,7 +658,6 @@ The production environment separates the frontend and backend into independent s
        └────────────────┘       └───────┬────────┘
                                         │
                                         ▼
-                                ┌────────────────┐
                                 │    MongoDB     │
                                 └────────────────┘
 ```
@@ -702,7 +693,6 @@ Push to main
     │
     ▼
 Production Server
-    │
     ▼
 deploy.sh
     │
@@ -733,7 +723,6 @@ Security is handled across both the frontend and backend.
 ### Authentication
 
 * JWT-based authentication
-* Protected API routes
 * Authentication middleware
 
 ### Backend Protection
@@ -751,7 +740,6 @@ Example:
 ```env
 MONGO_URI=...
 JWT_SECRET=...
-```
 
 Production secrets should never be committed to the repository.
 
@@ -772,7 +760,6 @@ npm run build
 ```
 
 The deployment process also performs service and endpoint checks after deployment.
-
 ---
 
 # 📈 Production Considerations
@@ -812,7 +799,6 @@ An AI assistant could help users:
 
 ### 📱 Mobile Application
 
-A React Native application could consume the existing REST API and provide a mobile experience without rebuilding the backend.
 
 ### 📊 Advanced Analytics
 
@@ -850,7 +836,6 @@ FITbUZZ demonstrates several concepts that are useful to discuss in a software e
 
 ### 3. MongoDB Data Layer
 
-> “Mongoose provides the modeling and data-access layer between the Express application and MongoDB.”
 
 ### 4. State Management
 
@@ -872,7 +857,6 @@ FITbUZZ demonstrates several concepts that are useful to discuss in a software e
 
 > “NGINX acts as the reverse proxy while Supervisor manages the frontend and backend processes.”
 
----
 
 # 📋 Feature Matrix
 
@@ -883,7 +867,6 @@ FITbUZZ demonstrates several concepts that are useful to discuss in a software e
 | Protected API Routes        |    ✅   |
 | Workout Management          |    ✅   |
 | Exercise Library            |    ✅   |
-| Nutrition Tracking          |    ✅   |
 | Progress Dashboard          |    ✅   |
 | Data Visualization          |    ✅   |
 | Workout Sharing             |    ✅   |
@@ -897,7 +880,6 @@ FITbUZZ demonstrates several concepts that are useful to discuss in a software e
 ---
 
 # 🌐 Live Demo
-
 ### FITbUZZ
 
 **Production:**

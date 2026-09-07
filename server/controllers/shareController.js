@@ -8,7 +8,8 @@ exports.shareWorkout = async (req, res) => {
     }
     
     // Generate shareable link (in real app, you'd create a share token)
-    const shareLink = `${req.protocol}://${req.get('host')}/share/workout/${workout._id}`;
+    const frontendOrigin = process.env.FRONTEND_URL || req.get('origin') || `${req.protocol}://${req.get('host')}`;
+    const shareLink = `${frontendOrigin.replace(/\/$/, '')}/share/workout/${workout._id}`;
     
     res.json({ shareLink });
   } catch (err) {

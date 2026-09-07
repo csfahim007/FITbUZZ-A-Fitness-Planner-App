@@ -114,6 +114,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/workouts', require('./routes/workoutRoutes'));
 app.use('/api/exercises', require('./routes/exerciseRoutes'));
 app.use('/api/nutrition', require('./routes/nutritionRoutes'));
+app.use('/api/share', require('./routes/shareRoutes'));
 
 // 12. 404 handler for API routes
 app.use('/api/*', (req, res) => {

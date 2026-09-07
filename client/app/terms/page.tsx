@@ -1,0 +1,2 @@
+export default function TermsPage() { return <InfoPage title="Terms of service" text="Use FitBuzz responsibly and keep your account credentials private. The service is provided to help you organize personal fitness activity." />; }
+function InfoPage({ title, text }: { title: string; text: string }) { return <div className="content-container max-w-3xl py-16"><p className="text-sm font-bold uppercase tracking-widest text-mint">FitBuzz</p><h1 className="mt-3 text-4xl font-black">{title}</h1><p className="mt-6 leading-8 text-slate-600">{text}</p></div>; }
