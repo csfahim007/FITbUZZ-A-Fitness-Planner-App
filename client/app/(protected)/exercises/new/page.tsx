@@ -1,4 +1,132 @@
 'use client';
-import { FormEvent, useState } from 'react'; import { useRouter } from 'next/navigation'; import { exerciseService } from '@/lib/api/services'; import { PageHeader } from '@/components/ui/PageHeader';
-export default function NewExercisePage() { const router = useRouter(); const [form, setForm] = useState({ name: '', muscleGroup: '', equipment: '', instructions: '', caloriesPerRep: 0 }); const [error, setError] = useState(''); const update = (key: keyof typeof form, value: string | number) => setForm((current) => ({ ...current, [key]: value })); async function submit(event: FormEvent) { event.preventDefault(); try { const response = await exerciseService.create(form); router.replace(`/exercises/${response.data._id}`); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Unable to create exercise'); } } return <div className="content-container py-12"><PageHeader eyebrow="Movement library" title="Add an exercise" description="Capture the details you will want when building a workout." /><form onSubmit={submit} className="grid max-w-2xl gap-5 rounded-2xl bg-white p-7 shadow-sm sm:grid-cols-2"><Field label="Name" value={form.name} onChange={(value) => update('name', value)} /><Field label="Muscle group" value={form.muscleGroup} onChange={(value) => update('muscleGroup', value)} /><Field label="Equipment" value={form.equipment} onChange={(value) => update('equipment', value)} /><Field label="Calories per rep" type="number" value={String(form.caloriesPerRep)} onChange={(value) => update('caloriesPerRep', Number(value))} /><label className="sm:col-span-2 text-sm font-semibold">Instructions<textarea value={form.instructions} onChange={(event) => update('instructions', event.target.value)} className="mt-2 min-h-28 w-full rounded-lg border border-slate-300 px-4 py-3" /></label>{error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}<button className="rounded-lg bg-mint px-5 py-3 font-bold text-white sm:col-span-2">Save exercise</button></form></div>; }
-function Field({ label, type = 'text', value, onChange }: { label: string; type?: string; value: string; onChange: (value: string) => void }) { return <label className="text-sm font-semibold">{label}<input required={label !== 'Calories per rep'} type={type} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3" /></label>; }
+
+import { FormEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { exerciseService } from '@/lib/api/services';
+import { PageHeader } from '@/components/ui/PageHeader';
+
+const muscleGroups = ['chest', 'back', 'arms', 'shoulders', 'legs', 'core', 'full-body'];
+const equipmentOptions = ['bodyweight', 'barbell', 'dumbbell', 'machine', 'kettlebell', 'cable', 'bands', 'other'];
+
+export default function NewExercisePage() {
+  const router = useRouter();
+  const [form, setForm] = useState({
+    name: '',
+    muscleGroup: 'chest',
+    equipment: 'bodyweight',
+    instructions: '',
+    caloriesPerRep: 0,
+  });
+  const [error, setError] = useState('');
+
+  const update = (key: keyof typeof form, value: string | number) => {
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    try {
+      const response = await exerciseService.create({
+        ...form,
+        name: form.name.trim(),
+        instructions: form.instructions.trim(),
+        caloriesPerRep: Number(form.caloriesPerRep) || 0,
+      });
+      router.replace(`/exercises/${response.data._id}`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Unable to create exercise');
+    }
+  }
+
+  return (
+    <div className="content-container py-12">
+      <PageHeader
+        eyebrow="Movement library"
+        title="Add an exercise"
+        description="Capture the details you will want when building a workout."
+      />
+
+      <form onSubmit={submit} className="grid max-w-2xl gap-5 rounded-2xl bg-white p-7 shadow-sm sm:grid-cols-2">
+        <Field label="Name" value={form.name} onChange={(value) => update('name', value)} />
+
+        <label className="text-sm font-semibold">
+          Muscle group
+          <select
+            value={form.muscleGroup}
+            onChange={(event) => update('muscleGroup', event.target.value)}
+            className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3"
+          >
+            {muscleGroups.map((group) => (
+              <option key={group} value={group}>
+                {group.replace('-', ' ')}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="text-sm font-semibold">
+          Equipment
+          <select
+            value={form.equipment}
+            onChange={(event) => update('equipment', event.target.value)}
+            className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3"
+          >
+            {equipmentOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <Field
+          label="Calories per rep"
+          type="number"
+          value={String(form.caloriesPerRep)}
+          onChange={(value) => update('caloriesPerRep', Number(value) || 0)}
+        />
+
+        <label className="sm:col-span-2 text-sm font-semibold">
+          Instructions
+          <textarea
+            value={form.instructions}
+            onChange={(event) => update('instructions', event.target.value)}
+            className="mt-2 min-h-28 w-full rounded-lg border border-slate-300 px-4 py-3"
+          />
+        </label>
+
+        {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
+
+        <button type="submit" className="rounded-lg bg-mint px-5 py-3 font-bold text-white sm:col-span-2">
+          Save exercise
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  type = 'text',
+  value,
+  onChange,
+}: {
+  label: string;
+  type?: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="text-sm font-semibold">
+      {label}
+      <input
+        required={label !== 'Calories per rep'}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3"
+      />
+    </label>
+  );
+}
+

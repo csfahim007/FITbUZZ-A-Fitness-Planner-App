@@ -73,15 +73,35 @@ exports.getExercise = asyncHandler(async (req, res) => {
 // @access Private
 exports.createExercise = asyncHandler(async (req, res) => {
   console.log('Creating exercise with data:', req.body);
-  
-  try {
-    const { name, muscleGroup, equipment, instructions, caloriesPerRep } = req.body;
 
-    // Validation
+  try {
+    const name = String(req.body.name || '').trim();
+    const muscleGroup = String(req.body.muscleGroup || '').trim();
+    const equipment = String(req.body.equipment || '').trim();
+    const instructions = String(req.body.instructions || '').trim();
+    const caloriesPerRep = Number(req.body.caloriesPerRep ?? 0);
+
+    const allowedMuscleGroups = ['chest', 'back', 'arms', 'shoulders', 'legs', 'core', 'full-body'];
+    const allowedEquipment = ['barbell', 'dumbbell', 'machine', 'bodyweight', 'kettlebell', 'cable', 'bands', 'other'];
+
     if (!name || !muscleGroup || !equipment) {
       return res.status(400).json({
         success: false,
         message: 'Please provide name, muscle group, and equipment'
+      });
+    }
+
+    if (!allowedMuscleGroups.includes(muscleGroup)) {
+      return res.status(400).json({
+        success: false,
+        message: `Muscle group must be one of: ${allowedMuscleGroups.join(', ')}`
+      });
+    }
+
+    if (!allowedEquipment.includes(equipment)) {
+      return res.status(400).json({
+        success: false,
+        message: `Equipment must be one of: ${allowedEquipment.join(', ')}`
       });
     }
 
@@ -90,27 +110,34 @@ exports.createExercise = asyncHandler(async (req, res) => {
       name,
       muscleGroup,
       equipment,
-      instructions: instructions || '',
-      caloriesPerRep: caloriesPerRep || 0
+      instructions,
+      caloriesPerRep: Number.isFinite(caloriesPerRep) ? caloriesPerRep : 0
     });
 
     console.log('Exercise created:', exercise);
     res.status(201).json({ success: true, data: exercise });
   } catch (error) {
     console.error('Error creating exercise:', error);
-    
-    // Handle duplicate key error
+
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
         message: 'Exercise with this name already exists'
       });
     }
-    
-    res.status(500).json({ 
-      success: false, 
+
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors || {}).map((item) => item.message);
+      return res.status(400).json({
+        success: false,
+        message: messages.join(', ')
+      });
+    }
+
+    res.status(500).json({
+      success: false,
       message: 'Failed to create exercise',
-      error: error.message 
+      error: error.message
     });
   }
 });
