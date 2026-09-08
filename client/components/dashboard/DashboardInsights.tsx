@@ -95,12 +95,6 @@ export function DashboardInsights() {
 
   return (
     <section className="mt-10 space-y-6">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Metric label="Today" value={workouts.filter((workout) => isSameDay(workout.createdAt, today)).length} detail="workouts" />
-        <Metric label="This week" value={weekly.length} detail={`${calories} kcal estimated`} />
-        <Metric label="This month" value={monthly.length} detail="workouts logged" />
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
           <div className="flex items-end justify-between">
@@ -172,6 +166,12 @@ export function DashboardInsights() {
             Add exercise
           </Link>
         </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Metric label="Today" value={workouts.filter((workout) => isSameDay(workout.createdAt, today)).length} detail="workouts" />
+        <Metric label="This week" value={weekly.length} detail={`${calories} kcal estimated`} />
+        <Metric label="This month" value={monthly.length} detail="workouts logged" />
       </div>
     </section>
   );
