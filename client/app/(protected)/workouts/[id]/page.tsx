@@ -11,7 +11,11 @@ import { ShareWorkout } from '@/components/workouts/ShareWorkout';
 
 function toDateInputValue(value?: string) {
   if (!value) return new Date().toISOString().slice(0, 10);
-  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return value.slice(0, 10);
+  }
+
   return new Date(value).toISOString().slice(0, 10);
 }
 
@@ -21,68 +25,85 @@ function toDateLabel(value?: string) {
 }
 
 function estimateExerciseCalories(entry: WorkoutExercise) {
-  const exercise = typeof entry.exercise === 'string' ? null : entry.exercise;
+  const exercise =
+    typeof entry.exercise === 'string' ? null : entry.exercise;
+
   const caloriesPerRep = Number(exercise?.caloriesPerRep ?? 0);
   const sets = Number(entry.sets ?? 0);
   const reps = Number(entry.reps ?? 0);
+
   return caloriesPerRep * sets * reps;
 }
 
 export default function WorkoutDetailPage() {
   const { id } = useParams<{ id: string }>();
+
   const [item, setItem] = useState<Workout | null>(null);
   const [exerciseOptions, setExerciseOptions] = useState<Exercise[]>([]);
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
+
   const [draftSets, setDraftSets] = useState('3');
   const [draftReps, setDraftReps] = useState('10');
   const [draftWeight, setDraftWeight] = useState('0');
+
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!id) return;
 
-    Promise.all([workoutService.get(id), exerciseService.list()])
+    Promise.all([
+      workoutService.get(id),
+      exerciseService.list(),
+    ])
       .then(([workoutResponse, exerciseResponse]) => {
         setItem(workoutResponse.data);
         setExerciseOptions(exerciseResponse.data);
+
         if (exerciseResponse.data[0]) {
           setSelectedExerciseId(exerciseResponse.data[0]._id);
         }
       })
       .catch((reason) => {
-        setError(reason instanceof Error ? reason.message : 'Unable to load workout');
+        setError(
+          reason instanceof Error
+            ? reason.message
+            : 'Unable to load workout',
+        );
       });
   }, [id]);
 
-async function persistWorkout(nextExercises: WorkoutExercise[]) {
-  if (!item || !id) return;
+  async function persistWorkout(nextExercises: WorkoutExercise[]) {
+    if (!item || !id) return;
 
-  setSaving(true);
+    setSaving(true);
+    setError('');
 
-  try {
-    const normalizedExercises = nextExercises.map((entry) => ({
-      ...entry,
-      exercise:
-        typeof entry.exercise === 'string'
-          ? entry.exercise
-          : entry.exercise._id,
-    }));
+    try {
+      const normalizedExercises = nextExercises.map((entry) => ({
+        ...entry,
+        exercise:
+          typeof entry.exercise === 'string'
+            ? entry.exercise
+            : entry.exercise._id,
+      }));
 
-    const response = await workoutService.update(id, {
-      exercises: normalizedExercises,
-      date: item.date || new Date().toISOString(),
-    });
+      const response = await workoutService.update(id, {
+        exercises: normalizedExercises,
+        date: item.date || new Date().toISOString(),
+      });
 
-    setItem(response.data);
-  } catch (reason) {
-    setError(
-      reason instanceof Error ? reason.message : 'Unable to save workout'
-    );
-  } finally {
-    setSaving(false);
+      setItem(response.data);
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : 'Unable to save workout',
+      );
+    } finally {
+      setSaving(false);
+    }
   }
-}
 
   async function addExercise() {
     if (!item || !selectedExerciseId) return;
@@ -94,65 +115,121 @@ async function persistWorkout(nextExercises: WorkoutExercise[]) {
         sets: Number(draftSets) || 0,
         reps: Number(draftReps) || 0,
         weight: Number(draftWeight) || 0,
+
+        // New exercises are not completed yet.
         completed: false,
+
+        // No completion date until the exercise is actually completed.
         completedAt: undefined,
+
+        // Will be populated when the exercise is completed.
         caloriesBurned: 0,
       },
     ];
 
     await persistWorkout(nextExercises);
+
     setDraftSets('3');
     setDraftReps('10');
     setDraftWeight('0');
   }
 
-  async function updateExerciseEntry(index: number, patch: Partial<WorkoutExercise>) {
+  async function updateExerciseEntry(
+    index: number,
+    patch: Partial<WorkoutExercise>,
+  ) {
     if (!item) return;
 
-    const nextExercises = item.exercises.map((entry, entryIndex) => {
-      if (entryIndex !== index) return entry;
-      return { ...entry, ...patch };
-    });
+    const nextExercises = item.exercises.map(
+      (entry, entryIndex) => {
+        if (entryIndex !== index) return entry;
+
+        return {
+          ...entry,
+          ...patch,
+        };
+      },
+    );
 
     await persistWorkout(nextExercises);
   }
 
-  if (!item && !error) return <Loading />;
-  if (error) return <div className="content-container py-12"><ApiState message={error} /></div>;
+  if (!item && !error) {
+    return <Loading />;
+  }
 
-  const availableExercises = exerciseOptions.filter((exercise) =>
-    !(item?.exercises ?? []).some((entry) => {
-      const id = typeof entry.exercise === 'string' ? entry.exercise : entry.exercise._id;
-      return id === exercise._id;
-    }),
+  if (error) {
+    return (
+      <div className="content-container py-12">
+        <ApiState message={error} />
+      </div>
+    );
+  }
+
+  const availableExercises = exerciseOptions.filter(
+    (exercise) =>
+      !(item?.exercises ?? []).some((entry) => {
+        const exerciseId =
+          typeof entry.exercise === 'string'
+            ? entry.exercise
+            : entry.exercise._id;
+
+        return exerciseId === exercise._id;
+      }),
   );
 
   return (
     <div className="content-container py-12">
-      <Link href="/workouts" className="text-sm font-bold text-mint">
+      <Link
+        href="/workouts"
+        className="text-sm font-bold text-mint"
+      >
         ← Back to workouts
       </Link>
 
       <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-8 text-slate-900 shadow-sm">
-        <p className="text-sm font-bold uppercase tracking-widest text-mint">Workout plan</p>
-        <h1 className="mt-3 text-4xl font-black">{item?.name}</h1>
+        <p className="text-sm font-bold uppercase tracking-widest text-mint">
+          Workout plan
+        </p>
+
+        <h1 className="mt-3 text-4xl font-black">
+          {item?.name}
+        </h1>
+
         <p className="mt-3 text-slate-600">
-          {item?.exercises.length || 0} exercises · {item?.totalCalories || 0} completed calories
+          {item?.exercises.length || 0} exercises ·{' '}
+          {item?.totalCalories || 0} completed calories
           {item?.date ? ` · ${toDateLabel(item.date)}` : ''}
         </p>
 
         <label className="mt-5 block max-w-xs text-sm font-semibold text-slate-700">
           Workout date
+
           <input
             type="date"
             value={toDateInputValue(item?.date)}
             onChange={async (event) => {
               if (!item) return;
-              const response = await workoutService.update(id, {
-                date: event.target.value,
-                exercises: item.exercises,
-              });
-              setItem(response.data);
+
+              setSaving(true);
+              setError('');
+
+              try {
+                const response = await workoutService.update(id, {
+                  date: event.target.value,
+                  exercises: item.exercises,
+                });
+
+                setItem(response.data);
+              } catch (reason) {
+                setError(
+                  reason instanceof Error
+                    ? reason.message
+                    : 'Unable to save workout date',
+                );
+              } finally {
+                setSaving(false);
+              }
             }}
             className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
           />
@@ -165,26 +242,42 @@ async function persistWorkout(nextExercises: WorkoutExercise[]) {
 
       <section className="mt-6 rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
         <div className="flex items-end justify-between gap-3">
-          <h2 className="text-xl font-black">Exercises</h2>
-          <span className="text-sm text-slate-500">{saving ? 'Saving...' : 'Ready'}</span>
+          <h2 className="text-xl font-black">
+            Exercises
+          </h2>
+
+          <span className="text-sm text-slate-500">
+            {saving ? 'Saving...' : 'Ready'}
+          </span>
         </div>
 
         <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
           <div className="grid gap-3 md:grid-cols-4">
             <label className="text-sm font-semibold text-slate-700 md:col-span-2">
               Exercise
+
               <select
                 value={selectedExerciseId}
-                onChange={(event) => setSelectedExerciseId(event.target.value)}
+                onChange={(event) =>
+                  setSelectedExerciseId(event.target.value)
+                }
                 className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
               >
                 {availableExercises.length === 0 ? (
-                  <option value="">No more exercises available</option>
+                  <option value="">
+                    No more exercises available
+                  </option>
                 ) : (
                   <>
-                    <option value="">Select an exercise</option>
+                    <option value="">
+                      Select an exercise
+                    </option>
+
                     {availableExercises.map((exercise) => (
-                      <option key={exercise._id} value={exercise._id}>
+                      <option
+                        key={exercise._id}
+                        value={exercise._id}
+                      >
                         {exercise.name}
                       </option>
                     ))}
@@ -195,34 +288,43 @@ async function persistWorkout(nextExercises: WorkoutExercise[]) {
 
             <label className="text-sm font-semibold text-slate-700">
               Sets
+
               <input
                 type="number"
                 min="0"
                 value={draftSets}
-                onChange={(event) => setDraftSets(event.target.value)}
+                onChange={(event) =>
+                  setDraftSets(event.target.value)
+                }
                 className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
               />
             </label>
 
             <label className="text-sm font-semibold text-slate-700">
               Reps
+
               <input
                 type="number"
                 min="0"
                 value={draftReps}
-                onChange={(event) => setDraftReps(event.target.value)}
+                onChange={(event) =>
+                  setDraftReps(event.target.value)
+                }
                 className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
               />
             </label>
 
             <label className="text-sm font-semibold text-slate-700">
               Weight (kg)
+
               <input
                 type="number"
                 min="0"
                 step="0.5"
                 value={draftWeight}
-                onChange={(event) => setDraftWeight(event.target.value)}
+                onChange={(event) =>
+                  setDraftWeight(event.target.value)
+                }
                 className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
               />
             </label>
@@ -231,7 +333,10 @@ async function persistWorkout(nextExercises: WorkoutExercise[]) {
           <button
             type="button"
             onClick={() => void addExercise()}
-            disabled={!selectedExerciseId || availableExercises.length === 0}
+            disabled={
+              !selectedExerciseId ||
+              availableExercises.length === 0
+            }
             className="mt-4 rounded-lg bg-mint px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             Add exercise
@@ -241,31 +346,86 @@ async function persistWorkout(nextExercises: WorkoutExercise[]) {
         {item?.exercises.length ? (
           <div className="mt-5 space-y-4">
             {item.exercises.map((entry, index) => {
-              const exerciseDetails = typeof entry.exercise === 'string' ? exerciseOptions.find((exercise) => exercise._id === entry.exercise) : entry.exercise;
-              const estimatedCalories = estimateExerciseCalories(entry);
+              const exerciseDetails =
+                typeof entry.exercise === 'string'
+                  ? exerciseOptions.find(
+                      (exercise) =>
+                        exercise._id === entry.exercise,
+                    )
+                  : entry.exercise;
+
+              const estimatedCalories =
+                estimateExerciseCalories(entry);
 
               return (
-                <div key={`${index}-${typeof entry.exercise === 'string' ? entry.exercise : entry.exercise._id}`} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div
+                  key={`${index}-${typeof entry.exercise === 'string'
+                    ? entry.exercise
+                    : entry.exercise._id}`}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                >
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="text-lg font-bold text-slate-900">{exerciseDetails?.name || 'Exercise'}</p>
-                      <p className="text-sm text-slate-500">
-                        Estimated burn: {estimatedCalories} kcal
+                      <p className="text-lg font-bold text-slate-900">
+                        {exerciseDetails?.name || 'Exercise'}
                       </p>
+
+                      <p className="text-sm text-slate-500">
+                        Estimated burn:{' '}
+                        {estimatedCalories} kcal
+                      </p>
+
+                      {entry.completed && entry.completedAt && (
+                        <p className="mt-1 text-xs text-slate-500">
+                          Completed:{' '}
+                          {toDateLabel(entry.completedAt)}
+                        </p>
+                      )}
                     </div>
 
                     <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
                       <input
                         type="checkbox"
                         checked={Boolean(entry.completed)}
-                        onChange={(event) =>
-                          void updateExerciseEntry(index, {
-                            completed: event.target.checked,
-                            completedAt: event.target.checked ? new Date().toISOString() : undefined,
-                            caloriesBurned: event.target.checked ? Number(entry.caloriesBurned || estimatedCalories) : 0,
-                          })
-                        }
+                        onChange={(event) => {
+                          const completed =
+                            event.target.checked;
+
+                          if (completed) {
+                            const calories =
+                              Number(
+                                entry.caloriesBurned || 0,
+                              ) || estimatedCalories;
+
+                            void updateExerciseEntry(
+                              index,
+                              {
+                                completed: true,
+
+                                // IMPORTANT:
+                                // This is the date the exercise
+                                // was actually completed.
+                                completedAt:
+                                  new Date().toLocaleDateString('en-CA'),
+
+                                // Store actual calories if entered,
+                                // otherwise use the estimate.
+                                caloriesBurned: calories,
+                              },
+                            );
+                          } else {
+                            void updateExerciseEntry(
+                              index,
+                              {
+                                completed: false,
+                                completedAt: undefined,
+                                caloriesBurned: 0,
+                              },
+                            );
+                          }
+                        }}
                       />
+
                       Done
                     </label>
                   </div>
@@ -273,14 +433,21 @@ async function persistWorkout(nextExercises: WorkoutExercise[]) {
                   <div className="mt-4 grid gap-3 md:grid-cols-5">
                     <label className="text-sm font-semibold text-slate-700">
                       Sets
+
                       <input
                         type="number"
                         min="0"
                         value={entry.sets ?? 0}
                         onChange={(event) =>
-                          void updateExerciseEntry(index, {
-                            sets: Number(event.target.value) || 0,
-                          })
+                          void updateExerciseEntry(
+                            index,
+                            {
+                              sets:
+                                Number(
+                                  event.target.value,
+                                ) || 0,
+                            },
+                          )
                         }
                         className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
                       />
@@ -288,14 +455,21 @@ async function persistWorkout(nextExercises: WorkoutExercise[]) {
 
                     <label className="text-sm font-semibold text-slate-700">
                       Reps
+
                       <input
                         type="number"
                         min="0"
                         value={entry.reps ?? 0}
                         onChange={(event) =>
-                          void updateExerciseEntry(index, {
-                            reps: Number(event.target.value) || 0,
-                          })
+                          void updateExerciseEntry(
+                            index,
+                            {
+                              reps:
+                                Number(
+                                  event.target.value,
+                                ) || 0,
+                            },
+                          )
                         }
                         className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
                       />
@@ -303,15 +477,22 @@ async function persistWorkout(nextExercises: WorkoutExercise[]) {
 
                     <label className="text-sm font-semibold text-slate-700">
                       Weight (kg)
+
                       <input
                         type="number"
                         min="0"
                         step="0.5"
                         value={entry.weight ?? 0}
                         onChange={(event) =>
-                          void updateExerciseEntry(index, {
-                            weight: Number(event.target.value) || 0,
-                          })
+                          void updateExerciseEntry(
+                            index,
+                            {
+                              weight:
+                                Number(
+                                  event.target.value,
+                                ) || 0,
+                            },
+                          )
                         }
                         className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
                       />
@@ -319,30 +500,79 @@ async function persistWorkout(nextExercises: WorkoutExercise[]) {
 
                     <label className="text-sm font-semibold text-slate-700">
                       Burned (kcal)
+
                       <input
                         type="number"
                         min="0"
                         step="1"
                         value={entry.caloriesBurned ?? 0}
-                        onChange={(event) =>
-                          void updateExerciseEntry(index, {
-                            caloriesBurned: Number(event.target.value) || 0,
-                          })
-                        }
+                        onChange={(event) => {
+                          const calories =
+                            Number(
+                              event.target.value,
+                            ) || 0;
+
+                          void updateExerciseEntry(
+                            index,
+                            {
+                              caloriesBurned: calories,
+
+                              // If the user enters calories,
+                              // consider the exercise completed.
+                              completed:
+                                calories > 0
+                                  ? true
+                                  : entry.completed,
+
+                              // Only create completedAt when
+                              // calories are entered and the
+                              // exercise does not already have one.
+                              completedAt:
+                                calories > 0
+                                  ? entry.completedAt ||
+                                    new Date().toISOString()
+                                  : entry.completedAt,
+                            },
+                          );
+                        }}
                         className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
                       />
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Done date
+
                       <input
                         type="date"
-                        value={entry.completedAt ? toDateInputValue(entry.completedAt) : new Date().toISOString().slice(0, 10)}
+                        value={
+                          entry.completedAt
+                            ? toDateInputValue(
+                                entry.completedAt,
+                              )
+                            : new Date()
+                                .toISOString()
+                                .slice(0, 10)
+                        }
                         onChange={(event) =>
-                          void updateExerciseEntry(index, {
-                            completedAt: event.target.value,
-                            completed: true,
-                          })
+                          void updateExerciseEntry(
+                            index,
+                            {
+                              // Keep this as the exercise's
+                              // completion date rather than
+                              // the parent workout date.
+                              completedAt:
+                                event.target.value,
+                              completed: true,
+
+                              // If no manual calorie value exists,
+                              // use the calculated estimate.
+                              caloriesBurned:
+                                Number(
+                                  entry.caloriesBurned || 0,
+                                ) ||
+                                estimatedCalories,
+                            },
+                          )
                         }
                         className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
                       />
@@ -353,7 +583,9 @@ async function persistWorkout(nextExercises: WorkoutExercise[]) {
             })}
           </div>
         ) : (
-          <p className="mt-4 text-slate-500">No exercises added yet.</p>
+          <p className="mt-4 text-slate-500">
+            No exercises added yet.
+          </p>
         )}
       </section>
     </div>
