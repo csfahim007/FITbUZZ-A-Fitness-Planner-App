@@ -48,6 +48,7 @@ export default function WorkoutDetailPage() {
 
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -364,220 +365,237 @@ export default function WorkoutDetailPage() {
                     : entry.exercise._id}`}
                   className="rounded-xl border border-slate-200 bg-slate-50 p-4"
                 >
+                  {/* Exercise header */}
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="text-lg font-bold text-slate-900">
                         {exerciseDetails?.name || 'Exercise'}
                       </p>
 
-                      <p className="text-sm text-slate-500">
-                        Estimated burn:{' '}
-                        {estimatedCalories} kcal
-                      </p>
+                      {!entry.completed && (
+                        <p className="text-sm text-slate-500">
+                          Estimated burn:{' '}
+                          {estimatedCalories} kcal
+                        </p>
+                      )}
 
                       {entry.completed && entry.completedAt && (
-                        <p className="mt-1 text-xs text-slate-500">
-                          Completed:{' '}
-                          {toDateLabel(entry.completedAt)}
-                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                          <span>
+                            Completed {toDateLabel(entry.completedAt)} ·{' '}
+                            {entry.caloriesBurned || estimatedCalories} kcal
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedIndex(
+                                expandedIndex === index
+                                  ? null
+                                  : index,
+                              )
+                            }
+                            className="font-bold text-mint hover:underline"
+                          >
+                            {expandedIndex === index
+                              ? 'Hide details'
+                              : 'Edit details'}
+                          </button>
+                        </div>
                       )}
                     </div>
 
-                    <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(entry.completed)}
-                        onChange={(event) => {
-                          const completed =
-                            event.target.checked;
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const completed = !entry.completed;
 
-                          if (completed) {
-                            const calories =
-                              Number(
-                                entry.caloriesBurned || 0,
-                              ) || estimatedCalories;
+                        if (completed) {
+                          const calories =
+                            Number(entry.caloriesBurned || 0) ||
+                            estimatedCalories;
 
+                          void updateExerciseEntry(index, {
+                            completed: true,
+
+                            // Store the actual local calendar date.
+                            completedAt:
+                              new Date().toLocaleDateString(
+                                'en-CA',
+                              ),
+
+                            caloriesBurned: calories,
+                          });
+
+                          setExpandedIndex(null);
+                        } else {
+                          void updateExerciseEntry(index, {
+                            completed: false,
+                            completedAt: undefined,
+                            caloriesBurned: 0,
+                          });
+
+                          setExpandedIndex(index);
+                        }
+                      }}
+                      className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${
+                        entry.completed
+                          ? 'bg-mint/10 text-mint ring-1 ring-mint'
+                          : 'bg-white text-slate-600 ring-1 ring-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      {entry.completed
+                        ? '✓ Completed'
+                        : 'Mark done'}
+                    </button>
+                  </div>
+
+                  {/* Exercise details */}
+                  {(!entry.completed ||
+                    expandedIndex === index) && (
+                    <div
+                      className={`mt-4 grid gap-3 ${
+                        entry.completed
+                          ? 'md:grid-cols-5'
+                          : 'md:grid-cols-4'
+                      }`}
+                    >
+                      {/* Sets */}
+                      <label className="text-sm font-semibold text-slate-700">
+                        Sets
+
+                        <input
+                          type="number"
+                          min="0"
+                          value={entry.sets ?? 0}
+                          onChange={(event) =>
                             void updateExerciseEntry(
                               index,
                               {
+                                sets:
+                                  Number(
+                                    event.target.value,
+                                  ) || 0,
+                              },
+                            )
+                          }
+                          className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                        />
+                      </label>
+
+                      {/* Reps */}
+                      <label className="text-sm font-semibold text-slate-700">
+                        Reps
+
+                        <input
+                          type="number"
+                          min="0"
+                          value={entry.reps ?? 0}
+                          onChange={(event) =>
+                            void updateExerciseEntry(
+                              index,
+                              {
+                                reps:
+                                  Number(
+                                    event.target.value,
+                                  ) || 0,
+                              },
+                            )
+                          }
+                          className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                        />
+                      </label>
+
+                      {/* Weight */}
+                      <label className="text-sm font-semibold text-slate-700">
+                        Weight (kg)
+
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          value={entry.weight ?? 0}
+                          onChange={(event) =>
+                            void updateExerciseEntry(
+                              index,
+                              {
+                                weight:
+                                  Number(
+                                    event.target.value,
+                                  ) || 0,
+                              },
+                            )
+                          }
+                          className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                        />
+                      </label>
+
+                      {/* Burned calories — completed exercises only */}
+                      {entry.completed && (
+                        <label className="text-sm font-semibold text-slate-700">
+                          Burned (kcal)
+
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={entry.caloriesBurned ?? 0}
+                            onChange={(event) =>
+                              void updateExerciseEntry(
+                                index,
+                                {
+                                  caloriesBurned:
+                                    Number(
+                                      event.target.value,
+                                    ) || 0,
+                                },
+                              )
+                            }
+                            className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                          />
+                        </label>
+                      )}
+
+                      {/* Done date */}
+                      <label className="text-sm font-semibold text-slate-700">
+                        Done date
+
+                        <input
+                          type="date"
+                          value={
+                            entry.completedAt
+                              ? toDateInputValue(
+                                  entry.completedAt,
+                                )
+                              : new Date().toLocaleDateString('en-CA')
+                          }
+                          onChange={(event) =>
+                            void updateExerciseEntry(
+                              index,
+                              {
+                                // Keep this as the exercise's
+                                // completion date rather than
+                                // the parent workout date.
+                                completedAt:
+                                  event.target.value,
+
                                 completed: true,
 
-                                // IMPORTANT:
-                                // This is the date the exercise
-                                // was actually completed.
-                                completedAt:
-                                  new Date().toLocaleDateString('en-CA'),
-
-                                // Store actual calories if entered,
-                                // otherwise use the estimate.
-                                caloriesBurned: calories,
+                                // If no manual calorie value exists,
+                                // use the calculated estimate.
+                                caloriesBurned:
+                                  Number(
+                                    entry.caloriesBurned || 0,
+                                  ) ||
+                                  estimatedCalories,
                               },
-                            );
-                          } else {
-                            void updateExerciseEntry(
-                              index,
-                              {
-                                completed: false,
-                                completedAt: undefined,
-                                caloriesBurned: 0,
-                              },
-                            );
+                            )
                           }
-                        }}
-                      />
-
-                      Done
-                    </label>
-                  </div>
-
-                  <div className="mt-4 grid gap-3 md:grid-cols-5">
-                    <label className="text-sm font-semibold text-slate-700">
-                      Sets
-
-                      <input
-                        type="number"
-                        min="0"
-                        value={entry.sets ?? 0}
-                        onChange={(event) =>
-                          void updateExerciseEntry(
-                            index,
-                            {
-                              sets:
-                                Number(
-                                  event.target.value,
-                                ) || 0,
-                            },
-                          )
-                        }
-                        className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                      />
-                    </label>
-
-                    <label className="text-sm font-semibold text-slate-700">
-                      Reps
-
-                      <input
-                        type="number"
-                        min="0"
-                        value={entry.reps ?? 0}
-                        onChange={(event) =>
-                          void updateExerciseEntry(
-                            index,
-                            {
-                              reps:
-                                Number(
-                                  event.target.value,
-                                ) || 0,
-                            },
-                          )
-                        }
-                        className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                      />
-                    </label>
-
-                    <label className="text-sm font-semibold text-slate-700">
-                      Weight (kg)
-
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        value={entry.weight ?? 0}
-                        onChange={(event) =>
-                          void updateExerciseEntry(
-                            index,
-                            {
-                              weight:
-                                Number(
-                                  event.target.value,
-                                ) || 0,
-                            },
-                          )
-                        }
-                        className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                      />
-                    </label>
-
-                    <label className="text-sm font-semibold text-slate-700">
-                      Burned (kcal)
-
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={entry.caloriesBurned ?? 0}
-                        onChange={(event) => {
-                          const calories =
-                            Number(
-                              event.target.value,
-                            ) || 0;
-
-                          void updateExerciseEntry(
-                            index,
-                            {
-                              caloriesBurned: calories,
-
-                              // If the user enters calories,
-                              // consider the exercise completed.
-                              completed:
-                                calories > 0
-                                  ? true
-                                  : entry.completed,
-
-                              // Only create completedAt when
-                              // calories are entered and the
-                              // exercise does not already have one.
-                              completedAt:
-                                calories > 0
-                                  ? entry.completedAt ||
-                                    new Date().toISOString()
-                                  : entry.completedAt,
-                            },
-                          );
-                        }}
-                        className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                      />
-                    </label>
-
-                    <label className="text-sm font-semibold text-slate-700">
-                      Done date
-
-                      <input
-                        type="date"
-                        value={
-                          entry.completedAt
-                            ? toDateInputValue(
-                                entry.completedAt,
-                              )
-                            : new Date()
-                                .toISOString()
-                                .slice(0, 10)
-                        }
-                        onChange={(event) =>
-                          void updateExerciseEntry(
-                            index,
-                            {
-                              // Keep this as the exercise's
-                              // completion date rather than
-                              // the parent workout date.
-                              completedAt:
-                                event.target.value,
-                              completed: true,
-
-                              // If no manual calorie value exists,
-                              // use the calculated estimate.
-                              caloriesBurned:
-                                Number(
-                                  entry.caloriesBurned || 0,
-                                ) ||
-                                estimatedCalories,
-                            },
-                          )
-                        }
-                        className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                      />
-                    </label>
-                  </div>
+                          className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                        />
+                      </label>
+                    </div>
+                  )}
                 </div>
               );
             })}
