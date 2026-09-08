@@ -11,7 +11,13 @@ import { ShareWorkout } from '@/components/workouts/ShareWorkout';
 
 function toDateInputValue(value?: string) {
   if (!value) return new Date().toISOString().slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
   return new Date(value).toISOString().slice(0, 10);
+}
+
+function toDateLabel(value?: string) {
+  const dateValue = toDateInputValue(value);
+  return new Date(`${dateValue}T00:00:00`).toLocaleDateString();
 }
 
 function estimateExerciseCalories(entry: WorkoutExercise) {
@@ -120,7 +126,7 @@ export default function WorkoutDetailPage() {
         <h1 className="mt-3 text-4xl font-black">{item?.name}</h1>
         <p className="mt-3 text-slate-600">
           {item?.exercises.length || 0} exercises · {item?.totalCalories || 0} completed calories
-          {item?.date ? ` · ${new Date(item.date).toLocaleDateString()}` : ''}
+          {item?.date ? ` · ${toDateLabel(item.date)}` : ''}
         </p>
 
         <label className="mt-5 block max-w-xs text-sm font-semibold text-slate-700">
@@ -309,7 +315,6 @@ export default function WorkoutDetailPage() {
                         onChange={(event) =>
                           void updateExerciseEntry(index, {
                             caloriesBurned: Number(event.target.value) || 0,
-                            completed: Number(event.target.value) > 0 || entry.completed,
                           })
                         }
                         className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"

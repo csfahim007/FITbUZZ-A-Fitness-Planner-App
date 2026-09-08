@@ -10,6 +10,24 @@ import { Loading } from '@/components/ui/Loading';
 const dayFormatter = new Intl.DateTimeFormat('en', { weekday: 'short' });
 const palette = ['#7dd3a8', '#a7f3d0', '#facc15', '#c084fc', '#f472b6', '#2dd4bf', '#60a5fa'];
 
+function dateKey(value: string | undefined) {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+}
+
+function localDateKey(date: Date) {
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+}
+
+function dateLabel(value: string | undefined) {
+  const key = dateKey(value);
+  return key ? new Date(`${key}T00:00:00`).toLocaleDateString() : 'Unscheduled';
+}
+
 export function DashboardInsights() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -34,7 +52,8 @@ export function DashboardInsights() {
   startOfDay.setHours(0, 0, 0, 0);
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
-  const [selectedDate, setSelectedDate] = useState(() => today.toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState(() => localDateKey(today));
+  const [calendarSize, setCalendarSize] = useState<'compact' | 'expanded'>('compact');
 
   const workoutDate = (workout: Workout) => workout.date || workout.createdAt;
   const isSameDay = (value: string | undefined, date: Date) => (value ? new Date(value).toDateString() === date.toDateString() : false);
@@ -52,7 +71,7 @@ export function DashboardInsights() {
     workouts.forEach((workout) => {
       const workoutDateValue = workoutDate(workout);
       if (!workoutDateValue) return;
-      const dayKey = new Date(workoutDateValue).toISOString().slice(0, 10);
+      const dayKey = dateKey(workoutDateValue);
       const calendarItem = calendarMap.get(dayKey) ?? { plannedWorkouts: [], completedExercises: [], count: 0 };
       calendarItem.plannedWorkouts.push({ id: workout._id, name: workout.name });
       calendarItem.count += 1;
@@ -78,7 +97,7 @@ export function DashboardInsights() {
     const calendarDays = Array.from({ length: 42 }, (_, index) => {
       const date = new Date(startCalendar);
       date.setDate(startCalendar.getDate() + index);
-      const isoKey = date.toISOString().slice(0, 10);
+      const isoKey = localDateKey(date);
       const entry = calendarMap.get(isoKey) ?? { plannedWorkouts: [], completedExercises: [], count: 0 };
       return {
         date,
@@ -245,7 +264,7 @@ export function DashboardInsights() {
               <div key={workout._id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-base font-black text-ink">{workout.name}</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {new Date(workoutDate(workout) as string).toLocaleDateString()} · {workout.exercises.length} exercises
+                  {dateLabel(workoutDate(workout))} · {workout.exercises.length} exercises
                 </p>
               </div>
             ))}
@@ -262,6 +281,10 @@ export function DashboardInsights() {
             <h3 className="mt-2 text-xl font-black">Monthly calendar</h3>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex rounded-lg border border-slate-300 p-1 text-xs font-bold" aria-label="Calendar size">
+              <button type="button" onClick={() => setCalendarSize('compact')} className={`rounded px-2 py-1 ${calendarSize === 'compact' ? 'bg-ink text-white' : 'text-slate-500'}`}>Small</button>
+              <button type="button" onClick={() => setCalendarSize('expanded')} className={`rounded px-2 py-1 ${calendarSize === 'expanded' ? 'bg-ink text-white' : 'text-slate-500'}`}>Big</button>
+            </div>
             <button type="button" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))} className="rounded-lg border border-slate-300 px-2 py-1 text-sm font-bold text-slate-600">Prev</button>
             <span className="min-w-[140px] text-center text-sm font-bold text-slate-700">{monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
             <button type="button" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))} className="rounded-lg border border-slate-300 px-2 py-1 text-sm font-bold text-slate-600">Next</button>
@@ -274,7 +297,7 @@ export function DashboardInsights() {
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div className={`grid grid-cols-7 ${calendarSize === 'compact' ? 'gap-1' : 'gap-2'}`}>
           {calendarDays.map(({ date, isoKey, inMonth, entry }) => {
             const isToday = date.toDateString() === today.toDateString();
             const isSelected = isoKey === selectedDate;
@@ -286,7 +309,7 @@ export function DashboardInsights() {
                 type="button"
                 key={isoKey}
                 onClick={() => setSelectedDate(isoKey)}
-                className={`min-h-[100px] rounded-xl border p-2 text-left transition ${
+                className={`${calendarSize === 'compact' ? 'min-h-[58px] p-1.5' : 'min-h-[100px] p-2'} rounded-xl border text-left transition ${
                   inMonth ? 'border-slate-200 bg-slate-50 hover:bg-slate-100' : 'border-slate-100 bg-slate-100 text-slate-400'
                 } ${isToday ? 'ring-2 ring-mint' : ''} ${isSelected ? 'border-mint bg-mint/5 shadow-sm' : ''}`}
               >
@@ -301,15 +324,17 @@ export function DashboardInsights() {
                   ) : null}
                 </div>
 
-                <div className="mt-2 space-y-1">
+                <div className={`${calendarSize === 'compact' ? 'mt-1' : 'mt-2'} space-y-1`}>
                   {workoutCount > 0 ? (
                     <div className="rounded bg-lime-100 px-1 py-0.5 text-[10px] font-bold text-mint">
-                      {workoutCount} workout{workoutCount === 1 ? '' : 's'}
+                      <span className={calendarSize === 'compact' ? 'sr-only' : ''}>{workoutCount} workout{workoutCount === 1 ? '' : 's'}</span>
+                      {calendarSize === 'compact' ? workoutCount : null}
                     </div>
                   ) : null}
                   {doneCount > 0 ? (
                     <div className="rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-700">
-                      {doneCount} completed
+                      <span className={calendarSize === 'compact' ? 'sr-only' : ''}>{doneCount} completed</span>
+                      {calendarSize === 'compact' ? doneCount : null}
                     </div>
                   ) : null}
                 </div>
