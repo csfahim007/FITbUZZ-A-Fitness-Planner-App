@@ -297,4 +297,7 @@ This project has already been migrated from older Vite/React patterns to the cur
 
 ## License
 
-This project is currently intended for internal project use and deployment. Add a license file if you intend to distribute or open-source the app.
+Copyright © 2026 Fahim. All rights reserved.
+
+Unauthorized copying, modification, distribution, or commercial use of this software and its associated documentation files, via any medium, is strictly prohibited.
+
