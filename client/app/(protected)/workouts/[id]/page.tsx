@@ -55,22 +55,34 @@ export default function WorkoutDetailPage() {
       });
   }, [id]);
 
-  async function persistWorkout(nextExercises: WorkoutExercise[]) {
-    if (!item || !id) return;
+async function persistWorkout(nextExercises: WorkoutExercise[]) {
+  if (!item || !id) return;
 
-    setSaving(true);
-    try {
-      const response = await workoutService.update(id, {
-        exercises: nextExercises,
-        date: item.date || new Date().toISOString(),
-      });
-      setItem(response.data);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to save workout');
-    } finally {
-      setSaving(false);
-    }
+  setSaving(true);
+
+  try {
+    const normalizedExercises = nextExercises.map((entry) => ({
+      ...entry,
+      exercise:
+        typeof entry.exercise === 'string'
+          ? entry.exercise
+          : entry.exercise._id,
+    }));
+
+    const response = await workoutService.update(id, {
+      exercises: normalizedExercises,
+      date: item.date || new Date().toISOString(),
+    });
+
+    setItem(response.data);
+  } catch (reason) {
+    setError(
+      reason instanceof Error ? reason.message : 'Unable to save workout'
+    );
+  } finally {
+    setSaving(false);
   }
+}
 
   async function addExercise() {
     if (!item || !selectedExerciseId) return;
