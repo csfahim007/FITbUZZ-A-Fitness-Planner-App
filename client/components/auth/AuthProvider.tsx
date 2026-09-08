@@ -1,11 +1,12 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { create } from 'zustand';
 import { setAccessToken } from '@/lib/api/client';
 import { authService } from '@/lib/api/services';
 import type { User } from '@/types/domain';
 
-type AuthContextValue = {
+type AuthState = {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<User>;
@@ -13,63 +14,70 @@ type AuthContextValue = {
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
   deleteAccount: () => Promise<void>;
+  initialize: () => Promise<void>;
+  initialized: boolean;
 };
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+export const useAuth = create<AuthState>((set, get) => ({
+  user: null,
+  isLoading: true,
+  initialized: false,
+  initialize: async () => {
+    if (get().initialized) return;
+    set({ initialized: true });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    authService.me()
-      .then((response) => setUser(response.data))
-      .catch(() => authService.refresh().then((response) => { setAccessToken(response.token); return authService.me(); }).then((response) => setUser(response.data)).catch(() => setUser(null)))
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  async function login(email: string, password: string) {
+    try {
+      const response = await authService.me();
+      set({ user: response.data });
+    } catch {
+      try {
+        const response = await authService.refresh();
+        setAccessToken(response.token);
+        const userResponse = await authService.me();
+        set({ user: userResponse.data });
+      } catch {
+        set({ user: null });
+      }
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  login: async (email, password) => {
     const response = await authService.login({ email, password });
     setAccessToken(response.data.token);
     const nextUser = { ...response.data };
     delete (nextUser as Partial<User & { token: string }>).token;
-    setUser(nextUser);
+    set({ user: nextUser });
     return nextUser;
-  }
-
-  async function register(body: { name: string; email: string; password: string; confirmPassword: string; fitnessGoal: string }) {
+  },
+  register: async (body) => {
     const response = await authService.register(body);
     setAccessToken(response.data.token);
     const nextUser = { ...response.data };
     delete (nextUser as Partial<User & { token: string }>).token;
-    setUser(nextUser);
+    set({ user: nextUser });
     return nextUser;
-  }
-
-  async function logout() {
+  },
+  logout: async () => {
     try {
       await authService.logout();
     } finally {
       setAccessToken(null);
-      setUser(null);
+      set({ user: null });
     }
-  }
-
-  function updateUser(nextUser: User) {
-    setUser(nextUser);
-  }
-
-  async function deleteAccount() {
+  },
+  updateUser: (nextUser) => set({ user: nextUser }),
+  deleteAccount: async () => {
     await authService.deleteAccount();
     setAccessToken(null);
-    setUser(null);
-  }
+    set({ user: null });
+  },
+}));
 
-  return <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateUser, deleteAccount }}>{children}</AuthContext.Provider>;
-}
+export function AuthInitializer({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    void useAuth.getState().initialize();
+  }, []);
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
+  return children;
 }

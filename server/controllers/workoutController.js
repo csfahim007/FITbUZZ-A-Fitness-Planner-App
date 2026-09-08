@@ -6,6 +6,21 @@ const mongoose = require('mongoose');
 // @desc Get all workouts for logged in user
 // @route GET /api/workouts
 // @access Private
+function computeWorkoutCalories(workout) {
+  const entries = workout?.exercises || [];
+
+  return entries.reduce((sum, ex) => {
+    const estimatedCalories = Number(ex.exercise?.caloriesPerRep || 0) * Number(ex.sets || 0) * Number(ex.reps || 0);
+    const completedCalories = Number(ex.caloriesBurned || 0);
+
+    if (ex.completed) {
+      return sum + (completedCalories || estimatedCalories);
+    }
+
+    return sum + 0;
+  }, 0);
+}
+
 exports.getWorkouts = asyncHandler(async (req, res) => {
   console.log('Getting workouts for user:', req.user.id);
   
@@ -13,9 +28,7 @@ exports.getWorkouts = asyncHandler(async (req, res) => {
     const workouts = await Workout.find({ user: req.user.id }).populate('exercises.exercise');
     
     const workoutsWithCalories = workouts.map(workout => {
-      const totalCalories = workout.exercises.reduce((sum, ex) => {
-        return sum + (ex.exercise?.caloriesPerRep * ex.sets * ex.reps || 0);
-      }, 0);
+      const totalCalories = computeWorkoutCalories(workout);
       return { ...workout._doc, totalCalories };
     });
     
@@ -65,9 +78,7 @@ exports.getWorkout = asyncHandler(async (req, res) => {
       });
     }
 
-    const totalCalories = workout.exercises.reduce((sum, ex) => {
-      return sum + (ex.exercise?.caloriesPerRep * ex.sets * ex.reps || 0);
-    }, 0);
+    const totalCalories = computeWorkoutCalories(workout);
 
     res.status(200).json({ success: true, data: { ...workout._doc, totalCalories } });
   } catch (error) {
@@ -87,7 +98,7 @@ exports.createWorkout = asyncHandler(async (req, res) => {
   console.log('Creating workout with data:', req.body);
   
   try {
-    const { name, exercises } = req.body;
+    const { name, exercises, date } = req.body;
 
     // Validation
     if (!name) {
@@ -133,13 +144,12 @@ exports.createWorkout = asyncHandler(async (req, res) => {
     const workout = await Workout.create({
       user: req.user.id,
       name,
-      exercises: exercises || []
+      exercises: exercises || [],
+      date: date ? new Date(date) : undefined
     });
 
     const populatedWorkout = await Workout.findById(workout._id).populate('exercises.exercise');
-    const totalCalories = populatedWorkout.exercises.reduce((sum, ex) => {
-      return sum + (ex.exercise?.caloriesPerRep * ex.sets * ex.reps || 0);
-    }, 0);
+    const totalCalories = computeWorkoutCalories(populatedWorkout);
 
     console.log('Workout created:', populatedWorkout);
     res.status(201).json({ success: true, data: { ...populatedWorkout._doc, totalCalories } });
@@ -245,9 +255,7 @@ exports.updateWorkout = asyncHandler(async (req, res) => {
       runValidators: true
     }).populate('exercises.exercise');
 
-    const totalCalories = workout.exercises.reduce((sum, ex) => {
-      return sum + (ex.exercise?.caloriesPerRep * ex.sets * ex.reps || 0);
-    }, 0);
+    const totalCalories = computeWorkoutCalories(workout);
 
     console.log('Workout updated:', workout);
     res.status(200).json({ success: true, data: { ...workout._doc, totalCalories } });

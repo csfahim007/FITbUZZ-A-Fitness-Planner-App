@@ -36,6 +36,10 @@ export interface WorkoutExercise {
   exercise: Exercise | string;
   sets: number;
   reps: number;
+  completed?: boolean;
+  completedAt?: string;
+  caloriesBurned?: number;
+  weight?: number;
 }
 
 export interface Workout {

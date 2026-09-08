@@ -22,8 +22,8 @@ export const authService = {
 export const workoutService = {
   list: () => apiRequest<ApiEnvelope<Workout[]>>(workouts),
   get: (id: string) => apiRequest<ApiEnvelope<Workout>>(`${workouts}/${id}`),
-  create: (body: Pick<Workout, 'name' | 'exercises'>) => apiRequest<ApiEnvelope<Workout>>(workouts, { method: 'POST', body: JSON.stringify(body) }),
-  update: (id: string, body: Partial<Pick<Workout, 'name' | 'exercises'>>) => apiRequest<ApiEnvelope<Workout>>(`${workouts}/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  create: (body: Pick<Workout, 'name' | 'exercises' | 'date'>) => apiRequest<ApiEnvelope<Workout>>(workouts, { method: 'POST', body: JSON.stringify(body) }),
+  update: (id: string, body: Partial<Pick<Workout, 'name' | 'exercises' | 'date'>>) => apiRequest<ApiEnvelope<Workout>>(`${workouts}/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   remove: (id: string) => apiRequest<ApiEnvelope<null>>(`${workouts}/${id}`, { method: 'DELETE' }),
 };
 

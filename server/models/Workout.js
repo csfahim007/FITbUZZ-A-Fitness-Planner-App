@@ -17,7 +17,17 @@ const workoutSchema = new mongoose.Schema({
     },
     sets: Number,
     reps: Number,
-    weight: Number
+    weight: Number,
+    completed: {
+      type: Boolean,
+      default: false
+    },
+    completedAt: Date,
+    caloriesBurned: {
+      type: Number,
+      default: 0,
+      min: 0
+    }
   }],
   date: {
     type: Date,

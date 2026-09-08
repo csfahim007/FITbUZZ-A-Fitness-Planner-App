@@ -11,7 +11,8 @@ Live app: https://fitbuzz.cloudafk.xyz/
 - React 18
 - TypeScript
 - Tailwind CSS
-- Axios for API requests
+- Zustand for authentication state management
+- Fetch-based typed API client and service layer
 - Charting via Chart.js and Recharts
 - Framer Motion, Lucide, and React Icons for UI polish
 
@@ -67,10 +68,14 @@ FITbUZZ/
 
 - User registration and login
 - JWT authentication and protected routes
-- Workout creation, editing, and sharing
-- Exercise library management
+- Workout creation, editing, scheduling, and sharing
+- Add exercises to workouts with sets, reps, weight, and completion status
+- Exercise completion checkpoints with calories burned per completed exercise
+- Server-calculated workout calorie totals shown in dashboard analytics
+- Exercise library management with exercise detail and creation flows
 - Nutrition tracking and summaries
-- Dashboard insights and progress charts
+- Dashboard insights, weekly calorie charts, scheduled workout counts, and monthly planner calendar
+- Selected calendar-day details with links to scheduled workout pages
 - Responsive layout for desktop and mobile
 - Production deployment workflow with health checks
 
@@ -81,11 +86,22 @@ FITbUZZ/
 The frontend now runs on Next.js using the App Router rather than the older Vite-based React SPA structure.
 
 Key responsibilities:
-- app/page routing and protected layouts
-- render patterns for server and client components
-- centralized API access through the client lib layer
+- App Router pages and protected layouts under `client/app`
+- Server and client component boundaries for authenticated screens
+- Centralized API access through `client/lib/api/client.ts` and `client/lib/api/services.ts`
 - Tailwind-based responsive styling
-- dashboard visualizations and workout planning flows
+- Dashboard visualizations, workout planning, exercise tracking, and nutrition flows
+
+### Frontend state management
+
+The active Next.js application uses a small, focused state architecture:
+
+- **Zustand** stores global authentication state in `client/components/auth/AuthProvider.tsx`.
+- The `useAuth()` store exposes the current user, loading state, login, registration, logout, profile updates, and account deletion.
+- `AuthInitializer` loads the current session and refreshes authentication when needed.
+- Components use React `useState`, `useEffect`, and `useMemo` for local form, loading, error, calendar, and derived dashboard state.
+- Backend data is fetched through the typed service layer and held by the consuming component; React Query and SWR are not used.
+- The older `client/legacy-vite` directory remains archived and contains the previous Redux Toolkit/RTK Query implementation. It is not used by the current Next.js routes.
 
 The app supports both migration-era API environment variables:
 - NEXT_PUBLIC_API_BASE_URL
@@ -106,6 +122,8 @@ Core API domains:
 - /api/nutrition
 - /api/share
 - /api/health
+
+Workout records support an optional planned date and exercise-level tracking metadata, including sets, reps, weight, completion state, completion time, and calories burned. Completed exercise calories are calculated server-side into the workout `totalCalories` value.
 
 Included middleware and safeguards:
 - CORS protection
@@ -199,6 +217,16 @@ Expected local URLs:
 - Backend: http://localhost:5001
 - Frontend: http://localhost:3000
 
+### Main frontend routes
+
+- `/login` and `/register` for authentication
+- `/dashboard` for summaries, calorie insights, scheduled workouts, and the monthly planner
+- `/workouts`, `/workouts/new`, and `/workouts/[id]` for workout management and exercise checkpoints
+- `/exercises`, `/exercises/new`, and `/exercises/[id]` for exercise library management
+- `/nutrition` for nutrition logs
+- `/my-account` for profile, security, and preferences
+- `/share/workout/[id]` for public shared workouts
+
 ---
 
 ## Production build and deployment
@@ -209,6 +237,8 @@ Expected local URLs:
 cd client
 npm run build
 ```
+
+The production build runs the Next.js compiler, lint/type validation, route generation, and optimization. The current build has been verified successfully with all application routes generated.
 
 ### Frontend production start
 
