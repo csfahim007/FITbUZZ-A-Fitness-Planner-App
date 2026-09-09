@@ -27,10 +27,18 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
       <div className="content-container flex min-h-16 items-center justify-between gap-6">
-        <Link href="/" className="flex items-center gap-3 font-black tracking-tight text-ink">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-mint text-lg text-white">F</span>
-          <span className="text-xl">FitBuzz</span>
-        </Link>
+        <Link
+            href="/"
+            className="flex items-center gap-3 font-black tracking-tight text-ink"
+          >
+            <img
+              src="/fitbuzz.svg"
+              alt="FitBuzz"
+              className="h-10 w-10 object-contain"
+            />
+
+            <span className="text-xl">FitBuzz</span>
+          </Link>
 
         <button type="button" className="rounded-lg border border-slate-200 px-3 py-2 text-sm md:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
           Menu
