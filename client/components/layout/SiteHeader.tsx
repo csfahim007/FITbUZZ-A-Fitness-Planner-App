@@ -32,7 +32,7 @@ export function SiteHeader() {
             className="flex items-center gap-3 font-black tracking-tight text-ink"
           >
             <img
-              src="/fitbuzz(1).svg"
+              src="/fitbuzz.svg"
               alt="FitBuzz"
               className="h-10 w-10 object-contain"
             />
